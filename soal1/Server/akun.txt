@@ -3,3 +3,7 @@ super:saiya
 unta:betina
 
 kuda:jantan
+kadal:api
+kadal:api
+kadal:api
+karpal:tunnel

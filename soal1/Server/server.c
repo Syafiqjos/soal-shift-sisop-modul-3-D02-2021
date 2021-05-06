@@ -22,11 +22,19 @@ FILE *akun_file;
 akun akun_data[10001] = {};
 int akun_data_size = 0;
 
+char akun_input_id[64] = {0};
+char akun_input_pass[64] = {0};
+char akun_input_pass_confirm[64] = {0};
+
 akun *logined_akun = NULL;
 
 FILE *buku_file;
 buku buku_data[10001] = {};
 int buku_data_size = 0;
+
+char buku_input_path[64] = {0};
+char buku_input_publisher[64] = {0};
+char buku_input_year[64] = {0};
 
 void resetbuffer(char *s){
 	memset(s, 0, sizeof(char) * 1024);
@@ -99,16 +107,19 @@ void append_akun_file(char *id, char *pass){
 	printf("Done Write akun.txt data.\n");
 }
 
-void login_akun(char *id, char *pass){
+int login_akun(char *id, char *pass){
 	int i = 0;
 	for (;i < akun_data_size;i++){
 		if (strcmp(akun_data[i].id, id) == 0){
 			if (strcmp(akun_data[i].pass, pass) == 0){
 				logined_akun = &akun_data[i];
-				return;
+				return 0; //success
+			} else {
+				return 1; //false pass
 			}
 		}
 	}
+	return 2; //not found
 }
 
 void register_akun(char *id, char *pass){
@@ -192,17 +203,74 @@ int main(int argc, char const *argv[]) {
 		valread = read( new_socket , buffer, 1024);
 
 		resetbuffer(sendbuffer);
-		if (strcmp(buffer, "1") == 0){
-			sprintf(sendbuffer,"register\n");
-		} else if (strcmp(buffer, "2") == 0){
-			sprintf(sendbuffer,"login\n");
-		} else if (strcmp(buffer, "3") == 0){
-			sprintf(sendbuffer,"exit\n");
-			is_running = false;
-			break;
+
+		if (!logined_akun){ //if not login
+			if (strcmp(buffer, "1") == 0){
+				resetbuffer(sendbuffer);
+				sprintf(sendbuffer,"Register - Enter your id and pass\nid : ");
+				send(new_socket, sendbuffer, 1024 ,0);
+				valread = read( new_socket , buffer, 1024);
+				strcpy(akun_input_id, buffer);
+
+				resetbuffer(sendbuffer);
+				sprintf(sendbuffer,"pass : ");
+				send(new_socket, sendbuffer, 1024 ,0);
+				valread = read( new_socket , buffer, 1024);
+				strcpy(akun_input_pass, buffer);
+
+				resetbuffer(sendbuffer);
+				sprintf(sendbuffer,"pass confirmation : ");
+				send(new_socket, sendbuffer, 1024 ,0);
+				valread = read( new_socket , buffer, 1024);
+				strcpy(akun_input_pass_confirm, buffer);
+
+				resetbuffer(sendbuffer);
+				if (strcmp(akun_input_pass, akun_input_pass_confirm) == 0){
+					if (login_akun(akun_input_id, akun_input_pass) == 2) { //kalau gagal login, user tidak ada maka register
+						register_akun(akun_input_id, akun_input_pass);
+						sprintf(sendbuffer,"Register success!\n\nPlease login to continue\n\n");
+					} else {
+						sprintf(sendbuffer,"Register failed!\n\nUser exists!\n\n");
+					}
+				} else {
+					sprintf(sendbuffer,"Register failed!\n\nPass confirm not match!\n\n");
+				}
+				logout_akun();
+				home_ui(sendbuffer + strlen(sendbuffer));
+			} else if (strcmp(buffer, "2") == 0){
+				resetbuffer(sendbuffer);
+				sprintf(sendbuffer,"Login - Enter your id and pass\nid : ");
+				send(new_socket, sendbuffer, 1024 ,0);
+				valread = read( new_socket , buffer, 1024);
+				strcpy(akun_input_id, buffer);
+
+				resetbuffer(sendbuffer);
+				sprintf(sendbuffer,"pass : ");
+				send(new_socket, sendbuffer, 1024 ,0);
+				valread = read( new_socket , buffer, 1024);
+				strcpy(akun_input_pass, buffer);
+
+				int login_status = login_akun(akun_input_id, akun_input_pass);
+				if (login_status == 0){
+					sprintf(sendbuffer,"Login success!\n\n");
+				} else if (login_status == 1){
+					sprintf(sendbuffer,"Password invalid!\n\n");
+				} else if (login_status == 2){
+					sprintf(sendbuffer,"User not found!\n\n");
+				}
+
+				home_ui(sendbuffer + strlen(sendbuffer));
+				
+			} else if (strcmp(buffer, "3") == 0){
+				sprintf(sendbuffer,"exit\n");
+				is_running = false;
+				break;
+			} else {
+				home_ui(sendbuffer);
+				sprintf(sendbuffer + strlen(sendbuffer),"command not right\n");
+			}
 		} else {
-			home_ui(sendbuffer);
-			sprintf(sendbuffer + strlen(sendbuffer),"command not right\n");
+			//logined
 		}
 
 		send(new_socket, sendbuffer, 1024 ,0);
