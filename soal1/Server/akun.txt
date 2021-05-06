@@ -1,0 +1,5 @@
+kadal:super
+super:saiya
+unta:betina
+
+kuda:jantan
