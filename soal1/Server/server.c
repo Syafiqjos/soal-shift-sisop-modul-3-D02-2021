@@ -26,7 +26,7 @@ akun *logined_akun = NULL;
 
 FILE *buku_file;
 buku buku_data[10001] = {};
-int buku_data_size = 0
+int buku_data_size = 0;
 
 void resetbuffer(char *s){
 	memset(s, 0, sizeof(char) * 1024);
@@ -41,7 +41,7 @@ void read_buku_file(){
 
 	printf("Reading files.tsv data..\n");
 
-	while (fscanf(buku_file, "%s", data_temp) != EOF){
+	while (fscanf(buku_file, " %[^\n]", data_temp) != EOF){
 		if (strlen(data_temp) > 0){
 			strcpy(buku_data[i].path, strtok(data_temp, "\t"));
 			strcpy(buku_data[i].publisher, strtok(NULL, "\t"));
