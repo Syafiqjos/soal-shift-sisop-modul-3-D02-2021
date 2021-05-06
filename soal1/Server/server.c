@@ -32,7 +32,7 @@ void resetbuffer(char *s){
 	memset(s, 0, sizeof(char) * 1024);
 }
 
-void read_akun_file(){
+void read_buku_file(){
 	char data_temp[256] = {};
 
 	int i = 0;
@@ -43,9 +43,9 @@ void read_akun_file(){
 
 	while (fscanf(buku_file, "%s", data_temp) != EOF){
 		if (strlen(data_temp) > 0){
-			strcpy(buku_data[i].path, strtok(data_temp, ":"));
-			strcpy(buku_data[i].publisher, strtok(NULL, ":"));
-			strcpy(buku_data[i].year, strtok(NULL, ":"));
+			strcpy(buku_data[i].path, strtok(data_temp, "\t"));
+			strcpy(buku_data[i].publisher, strtok(NULL, "\t"));
+			strcpy(buku_data[i].year, strtok(NULL, "\t"));
 
 			printf("Buku:\npath : %s\npublisher : %s\nyear : %s\n\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
 
@@ -141,6 +141,7 @@ void goodbye_ui(char *s){
 int main(int argc, char const *argv[]) {
 	//Preparation
 	read_akun_file();
+	read_buku_file();
 
 	//Untuk konek
 	int server_fd, new_socket, valread;
