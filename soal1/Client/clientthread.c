@@ -15,9 +15,21 @@ int sock = 0, valread;
 struct sockaddr_in serv_addr;
 char sendbuffer[1024] = { 0 };
 char buffer[1024] = {0};
+char filebuffer[1024] = {0};
 
 pthread_t receiver_thread;
 bool is_running = false;
+
+void reset_buffer(char *s){
+	memset(s, 0, sizeof(char) * 1024);
+}
+
+void read_file(char *path){
+	reset_buffer(filebuffer);
+	FILE *file = fopen(path, "r");
+	fread(&filebuffer, sizeof(char), 1024, file);
+	fclose(file);
+}
 
 void *receiver_func(void *args){
 	pthread_t id = pthread_self();
@@ -28,11 +40,13 @@ void *receiver_func(void *args){
 			valread = read( sock , buffer, 1024);
 			if (strcmp(buffer, "Thank you for using our database!\n\n") == 0){
 				is_running = false;
-			} else if (strcmp(buffer, "[$TRANSFER_UPLOAD]") == 0) {
-				valread = read( sock , buffer, 1024); //read file then upload
+			} else if (strcmp(buffer, "[$TRANSFER_UPLOAD]") == 0) { //upload prep signal
+				valread = read( sock , buffer, 1024);
+				read_file(buffer);
+				send(sock , filebuffer , 1024 , 0);
 				continue;
-			} else if (strcmp(buffer, "[$TRANSFER_DOWNLOAD]") == 0){
-				valread = read( sock , buffer, 1024); //read file then download
+			} else if (strcmp(buffer, "[$TRANSFER_DOWNLOAD]") == 0){ //download prep signal
+				//belom
 				continue;
 			}
 
