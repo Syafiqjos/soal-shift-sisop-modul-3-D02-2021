@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <stdbool.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #define PORT 8080
 
 struct sockaddr_in address;
@@ -26,9 +28,12 @@ void reset_buffer(char *s){
 
 void read_file(char *path){
 	reset_buffer(filebuffer);
-	FILE *file = fopen(path, "r");
-	fread(&filebuffer, sizeof(char), 1024, file);
-	fclose(file);
+	struct stat st = {0};
+	if (stat(path, &st) != -1) {
+		FILE *file = fopen(path, "r");
+		fread(&filebuffer, sizeof(char), 1024, file);
+		fclose(file);
+	}
 }
 
 void write_file(char *path, char *content){
