@@ -31,6 +31,12 @@ void read_file(char *path){
 	fclose(file);
 }
 
+void write_file(char *path, char *content){
+	FILE *file = fopen(path, "w");
+	fwrite(filebuffer, sizeof(char), 1024, file);
+	fclose(file);
+}
+
 void *receiver_func(void *args){
 	pthread_t id = pthread_self();
 	if (pthread_equal(id, receiver_thread)){
@@ -41,8 +47,12 @@ void *receiver_func(void *args){
 			if (strcmp(buffer, "Thank you for using our database!\n\n") == 0){
 				is_running = false;
 			} else if (strcmp(buffer, "[$TRANSFER_UPLOAD]") == 0) { //upload prep signal
+				puts("valread");
+				sleep(1);
 				valread = read( sock , buffer, 1024);
+				printf("read : %s\n", buffer);
 				read_file(buffer);
+				printf("sendscok\n");
 				send(sock , filebuffer , 1024 , 0);
 				continue;
 			} else if (strcmp(buffer, "[$TRANSFER_DOWNLOAD]") == 0){ //download prep signal
