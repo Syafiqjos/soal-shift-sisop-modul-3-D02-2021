@@ -40,6 +40,7 @@ char akun_input_pass[64] = {0};
 char akun_input_pass_confirm[64] = {0};
 
 akun *logined_akun = NULL;
+bool is_running = true;
 
 FILE *buku_file;
 buku buku_data[10001] = {};
@@ -67,7 +68,12 @@ void receive_message(){
 	valread = read(new_socket , buffer, 1024);
 }
 
-void read_buku_file(){
+void make_file(char *path){
+	FILE *file = fopen(path, "w");
+	fclose(file);
+}
+
+void read_buku_file(bool show){
 	char data_temp[256] = {};
 
 	int i = 0;
@@ -83,6 +89,10 @@ void read_buku_file(){
 			strcpy(buku_data[i].year, strtok(NULL, "\t"));
 
 			printf("Buku:\npath : %s\npublisher : %s\nyear : %s\n\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+			if (show){
+				sprintf(tempbuffer,"Buku:\npath : %s\npublisher : %s\nyear : %s\n\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+				send_message(tempbuffer);
+			}
 
 			i++;
 		}
@@ -95,6 +105,56 @@ void read_buku_file(){
 	printf("Done Reading files.csv data.\n");
 }
 
+void write_buku_file(){
+	buku_file = fopen("files.tsv", "w");
+
+	int i = 0;
+	for(;i < buku_data_size;i++){
+		if (buku_data[i].path[0] != 0){
+			fprintf(buku_file, "%s\t%s\t%s\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+		}
+	}
+
+	fclose(buku_file);
+
+	read_buku_file(false);
+}
+
+void find_buku_file(char *pattern){
+	int i = 0;
+	for (;i < buku_data_size;i++){
+		if (strstr(buku_data[i].path, pattern) || strstr(buku_data[i].publisher, pattern) || strstr(buku_data[i].year, pattern)){
+				sprintf(tempbuffer,"Buku:\npath : %s\npublisher : %s\nyear : %s\n\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+				send_message(tempbuffer);
+		}
+	}
+}
+
+void delete_buku_file(char *path){
+	int found = -1;
+	int i = 0;
+	for (;i < buku_data_size;i++){
+		if (strcmp(path, buku_data[i].path) == 0){
+			found = i;
+		}
+	}
+
+	if (found != -1){
+		char file_name[64] = {0};
+		char file_name_new[64] = {0};
+
+		sprintf(file_name, "FILES/%s", buku_data[found].path);
+		sprintf(file_name_new, "FILES/old-%s", buku_data[found].path);
+		rename(file_name, file_name_new);
+
+		buku_data[found].path[0] = 0;
+		write_buku_file();
+
+		send_message("Book deleted successfully.\n");
+	} else {
+		send_message("Book not found\n");
+	}
+}
 
 void append_buku_file(char *publisher, char *year, char *path){
 	buku_file = fopen("files.tsv", "a");
@@ -104,6 +164,8 @@ void append_buku_file(char *publisher, char *year, char *path){
 	fprintf(buku_file, "%s\t%s\t%s\n", path, publisher, year);
 
 	fclose(buku_file);
+
+	read_buku_file(false);
 
 	printf("Done Write files.tsv data.\n");
 }
@@ -117,7 +179,7 @@ void read_akun_file(){
 
 	printf("Reading akun.txt data..\n");
 
-	while (fscanf(akun_file, "%s", data_temp) != EOF){
+	while (fscanf(akun_file, " %[^\n]", data_temp) != EOF){
 		if (strlen(data_temp) > 0){
 			strcpy(akun_data[i].id, strtok(data_temp, ":"));
 			strcpy(akun_data[i].pass, strtok(NULL, ":"));
@@ -229,8 +291,18 @@ void help_ui(){
 int main(int argc, char const *argv[]) {
 	//Preparation
 	make_directory("./FILES");
+
+	struct stat st = {0};
+	if (stat("akun.txt", &st) == -1){
+		make_file("akun.txt");
+	}
+
+	if (stat("files.tsv", &st) == -1){
+		make_file("files.tsv");
+	}
+
 	read_akun_file();
-	read_buku_file();
+	read_buku_file(false);
 
 	//Untuk konek
 
@@ -264,7 +336,6 @@ int main(int argc, char const *argv[]) {
 	}
 
 	//Mulai konek
-	bool is_running = true;
 
 	receive_message();
 	home_ui(sendbuffer);
@@ -384,20 +455,29 @@ int main(int argc, char const *argv[]) {
 				} else if (strcmp(buffer, "download") == 0){
 					
 				} else if (strcmp(buffer, "delete") == 0){
-				
+					send_message("Delete file menu. Insert server path!\npath :\n");
+					receive_message();
+
+					delete_buku_file(buffer);
 				} else if (strcmp(buffer, "see") == 0){
-				
+					read_buku_file(true);
 				} else if (strcmp(buffer, "find") == 0){
-				
+					send_message("Find book menu. Input pattern to find book contains provided pattern!\npattern :\n");
+					receive_message();
+
+					find_buku_file(buffer);
 				} else if (strcmp(buffer, "logout") == 0){
 					logout_akun();
 					send_message("Logout success!\n\n");
 					break;
+				} else if (strcmp(buffer, "exit") == 0){
+					logout_akun();
+					is_running = false;
+					break;
 				} else if (strcmp(buffer, "help") == 0){
 					help_ui();
-				} else {
-					sapa_user_ui();
 				}
+				sapa_user_ui();
 			
 			}
 			home_ui();
