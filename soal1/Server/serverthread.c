@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <sys/wait.h>
 #define PORT 8080
 
 typedef struct {
@@ -17,6 +18,14 @@ typedef struct {
 	char publisher[64];
 	char year[64];
 } buku;
+
+int server_fd, new_socket, valread;
+struct sockaddr_in address;
+int opt = 1;
+int addrlen = sizeof(address);
+char buffer[1024] = { 0 };
+char sendbuffer[1024] = { 0 };
+char tempbuffer[1024] = { 0 };
 
 FILE *akun_file;
 akun akun_data[10001] = {};
@@ -38,6 +47,12 @@ char buku_input_year[64] = {0};
 
 void resetbuffer(char *s){
 	memset(s, 0, sizeof(char) * 1024);
+}
+
+void send_message(char *s){
+	resetbuffer(sendbuffer);
+	sprintf(sendbuffer,"%s",s);
+	send(new_socket, sendbuffer, 1024 ,0);
 }
 
 void read_buku_file(){
@@ -133,14 +148,18 @@ void logout_akun(){
 	logined_akun = NULL;
 }
 
-void sapa_user_ui(char *s){
+void sapa_user_ui(){
 	if (logined_akun){
+		char *s = tempbuffer;
 		resetbuffer(s);
 		sprintf(s, "Hello, %s!\n\nInput 'help' to get list of command\n\n", logined_akun->id);
+
+		send_message(tempbuffer);
 	}
 }
 
-void home_ui(char *s){
+void home_ui(){
+	char *s = tempbuffer;
 	resetbuffer(s);
 	sprintf(s,"Welcome to database.\n");
 	sprintf(s + strlen(s), "Input provided number to continue:\n");
@@ -148,18 +167,26 @@ void home_ui(char *s){
 	sprintf(s + strlen(s), "2. Login\n");
 	sprintf(s + strlen(s), "3. Exit\n");
 	sprintf(s + strlen(s), "\n");
+
+	send_message(tempbuffer);
 }
 
-void goodbye_ui(char *s){
+void goodbye_ui(){
+	char *s  = tempbuffer;
 	resetbuffer(s);
 	sprintf(s,"Thank you for using our database!\n");
 	sprintf(s + strlen(s), "\n");
+
+	send_message(tempbuffer);
 }
 
-void help_ui(char *s){
+void help_ui(){
+	char *s = tempbuffer;
 	resetbuffer(s);
 	sprintf(s,"Help Mee!\n");
 	sprintf(s + strlen(s), "\n");
+	
+	send_message(tempbuffer);
 }
 
 int main(int argc, char const *argv[]) {
@@ -168,13 +195,6 @@ int main(int argc, char const *argv[]) {
 	read_buku_file();
 
 	//Untuk konek
-	int server_fd, new_socket, valread;
-	struct sockaddr_in address;
-	int opt = 1;
-	int addrlen = sizeof(address);
-	char buffer[1024] = { 0 };
-	char sendbuffer[1024] = { 0 };
-	char tempbuffer[1024] = { 0 };
 
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
 		perror("socket failed");
@@ -206,93 +226,74 @@ int main(int argc, char const *argv[]) {
 	}
 
 	//Mulai konek
-
 	bool is_running = true;
 
 	valread = read( new_socket , buffer, 1024);
 	home_ui(sendbuffer);
-	send(new_socket, sendbuffer, 1024 ,0);
 
 	while (is_running){
-		resetbuffer(sendbuffer);
-
 		if (!logined_akun){ //if not login
 			valread = read( new_socket , buffer, 1024);
 			if (strcmp(buffer, "1") == 0){
-				resetbuffer(sendbuffer);
-				sprintf(sendbuffer,"Register - Enter your id and pass\nid : ");
-				send(new_socket, sendbuffer, 1024 ,0);
+				send_message("Register - Enter your id and pass\nid :\n");
 				valread = read( new_socket , buffer, 1024);
 				strcpy(akun_input_id, buffer);
 
-				resetbuffer(sendbuffer);
-				sprintf(sendbuffer,"pass : ");
-				send(new_socket, sendbuffer, 1024 ,0);
+				send_message("pass :\n");
 				valread = read( new_socket , buffer, 1024);
 				strcpy(akun_input_pass, buffer);
 
-				resetbuffer(sendbuffer);
-				sprintf(sendbuffer,"pass confirmation : ");
-				send(new_socket, sendbuffer, 1024 ,0);
+				send_message("pass confirmation :\n");
 				valread = read( new_socket , buffer, 1024);
 				strcpy(akun_input_pass_confirm, buffer);
 
-				resetbuffer(sendbuffer);
 				if (strcmp(akun_input_pass, akun_input_pass_confirm) == 0){
 					if (login_akun(akun_input_id, akun_input_pass) == 2) { //kalau gagal login, user tidak ada maka register
 						register_akun(akun_input_id, akun_input_pass);
-						sprintf(sendbuffer,"Register success!\n\nPlease login to continue\n\n");
+						send_message("Register success!\n\nPlease login to continue\n\n");
 					} else {
-						sprintf(sendbuffer,"Register failed!\n\nUser exists!\n\n");
+						send_message("Register failed!\n\nUser exists!\n\n");
 					}
 				} else {
-					sprintf(sendbuffer,"Register failed!\n\nPass confirm not match!\n\n");
+					send_message("Register failed!\n\nPass confirm not match!\n\n");
 				}
 				logout_akun();
-				home_ui(sendbuffer + strlen(sendbuffer));
+				home_ui();
 			} else if (strcmp(buffer, "2") == 0){
-				resetbuffer(sendbuffer);
-				sprintf(sendbuffer,"Login - Enter your id and pass\nid : ");
-				send(new_socket, sendbuffer, 1024 ,0);
+				send_message("Login - Enter your id and pass\nid :\n");
 				valread = read( new_socket , buffer, 1024);
 				strcpy(akun_input_id, buffer);
 
-				resetbuffer(sendbuffer);
-				sprintf(sendbuffer,"pass : ");
-				send(new_socket, sendbuffer, 1024 ,0);
+				send_message("pass :\n");
 				valread = read( new_socket , buffer, 1024);
 				strcpy(akun_input_pass, buffer);
 
 				int login_status = login_akun(akun_input_id, akun_input_pass);
 				if (login_status == 0){
-					//sprintf(sendbuffer,"Login success!\n\n");
-					continue;
+					send_message("Login success!\n\n");
 				} else if (login_status == 1){
-					sprintf(sendbuffer,"Password invalid!\n\n");
+					send_message("Password invalid!\n\n");
 				} else if (login_status == 2){
-					sprintf(sendbuffer,"User not found!\n\n");
+					send_message("User not found!\n\n");
 				}
 
-				home_ui(sendbuffer + strlen(sendbuffer));
+				home_ui();
 				
 			} else if (strcmp(buffer, "3") == 0){
-				sprintf(sendbuffer,"exit\n");
+				send_message("exit\n");
 				is_running = false;
 				break;
 			} else {
-				home_ui(sendbuffer);
-				sprintf(sendbuffer + strlen(sendbuffer),"command not right\n");
+				send_message("command not right\n");
+				home_ui();
 			}
 		} else {
 			//logined
-			sprintf(sendbuffer, "\nLogin success!\n");
+			send_message("\nLogin success!\n");
 			
-			sapa_user_ui(tempbuffer);
-			strcat(sendbuffer, tempbuffer);
+			sapa_user_ui();
 
-			send(new_socket, sendbuffer, 1024 ,0);
-
-			while (logined_akun){
+			while (is_running && logined_akun){
 				valread = read(new_socket , buffer, 1024);
 				
 				if (strcmp(buffer, "add") == 0){
@@ -307,21 +308,19 @@ int main(int argc, char const *argv[]) {
 				
 				} else if (strcmp(buffer, "logout") == 0){
 					logout_akun();
-					sprintf(sendbuffer, "Logout success!\n\n");
+					send_message("Logout success!\n\n");
 					break;
 				} else if (strcmp(buffer, "help") == 0){
-					help_ui(sendbuffer);
+					help_ui();
 				} else {
-					sapa_user_ui(sendbuffer);
+					sapa_user_ui();
 				}
-				send(new_socket, sendbuffer, 1024 ,0);
+			
 			}
+			home_ui();
 		}
-
-		send(new_socket, sendbuffer, 1024 ,0);
 	}
 
-	goodbye_ui(sendbuffer);
-	send(new_socket, sendbuffer, 1024 ,0);
+	goodbye_ui();
 	return 0;
 }
