@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #define PORT 8080
 
 typedef struct {
@@ -26,6 +29,7 @@ int addrlen = sizeof(address);
 char buffer[1024] = { 0 };
 char sendbuffer[1024] = { 0 };
 char tempbuffer[1024] = { 0 };
+char filebuffer[1024] = { 0 };
 
 FILE *akun_file;
 akun akun_data[10001] = {};
@@ -45,6 +49,10 @@ char buku_input_path[64] = {0};
 char buku_input_publisher[64] = {0};
 char buku_input_year[64] = {0};
 
+void make_directory(char *s){
+	mkdir(s, 0700);
+}
+
 void resetbuffer(char *s){
 	memset(s, 0, sizeof(char) * 1024);
 }
@@ -53,6 +61,10 @@ void send_message(char *s){
 	resetbuffer(sendbuffer);
 	sprintf(sendbuffer,"%s",s);
 	send(new_socket, sendbuffer, 1024 ,0);
+}
+
+void receive_message(){
+	valread = read(new_socket , buffer, 1024);
 }
 
 void read_buku_file(){
@@ -81,6 +93,19 @@ void read_buku_file(){
 	fclose(buku_file);
 
 	printf("Done Reading files.csv data.\n");
+}
+
+
+void append_buku_file(char *publisher, char *year, char *path){
+	buku_file = fopen("files.tsv", "a");
+
+	printf("Writing files.tsv data..\n");
+
+	fprintf(buku_file, "%s\t%s\t%s\n", path, publisher, year);
+
+	fclose(buku_file);
+
+	printf("Done Write files.tsv data.\n");
 }
 
 void read_akun_file(){
@@ -120,6 +145,18 @@ void append_akun_file(char *id, char *pass){
 	fclose(akun_file);
 
 	printf("Done Write akun.txt data.\n");
+}
+
+void read_file(char *path){
+	FILE *file = fopen(path, "r");
+	fread(&filebuffer, sizeof(char), 1024, file);
+	fclose(file);
+}
+
+void write_file(char *path, char* content){
+	FILE *file = fopen(path, "w");
+	fwrite(content, sizeof(char), 1024, file);
+	fclose(file);
 }
 
 int login_akun(char *id, char *pass){
@@ -191,6 +228,7 @@ void help_ui(){
 
 int main(int argc, char const *argv[]) {
 	//Preparation
+	make_directory("./FILES");
 	read_akun_file();
 	read_buku_file();
 
@@ -228,23 +266,23 @@ int main(int argc, char const *argv[]) {
 	//Mulai konek
 	bool is_running = true;
 
-	valread = read( new_socket , buffer, 1024);
+	receive_message();
 	home_ui(sendbuffer);
 
 	while (is_running){
 		if (!logined_akun){ //if not login
-			valread = read( new_socket , buffer, 1024);
+			receive_message();
 			if (strcmp(buffer, "1") == 0){
-				send_message("Register - Enter your id and pass\nid :\n");
-				valread = read( new_socket , buffer, 1024);
+				send_message("Register - Enter your id and pass\n> id :\n");
+				receive_message();
 				strcpy(akun_input_id, buffer);
 
-				send_message("pass :\n");
-				valread = read( new_socket , buffer, 1024);
+				send_message("> pass :\n");
+				receive_message();
 				strcpy(akun_input_pass, buffer);
 
-				send_message("pass confirmation :\n");
-				valread = read( new_socket , buffer, 1024);
+				send_message("> pass confirmation :\n");
+				receive_message();
 				strcpy(akun_input_pass_confirm, buffer);
 
 				if (strcmp(akun_input_pass, akun_input_pass_confirm) == 0){
@@ -260,12 +298,12 @@ int main(int argc, char const *argv[]) {
 				logout_akun();
 				home_ui();
 			} else if (strcmp(buffer, "2") == 0){
-				send_message("Login - Enter your id and pass\nid :\n");
-				valread = read( new_socket , buffer, 1024);
+				send_message("Login - Enter your id and pass\n> id :\n");
+				receive_message();
 				strcpy(akun_input_id, buffer);
 
-				send_message("pass :\n");
-				valread = read( new_socket , buffer, 1024);
+				send_message("> pass :\n");
+				receive_message();
 				strcpy(akun_input_pass, buffer);
 
 				int login_status = login_akun(akun_input_id, akun_input_pass);
@@ -294,12 +332,57 @@ int main(int argc, char const *argv[]) {
 			sapa_user_ui();
 
 			while (is_running && logined_akun){
-				valread = read(new_socket , buffer, 1024);
+				receive_message();
 				
 				if (strcmp(buffer, "add") == 0){
-				
+					send_message("Insert book data!\n\n");
+					send_message("Publisher:\n");
+					receive_message();
+					strcpy(buku_input_publisher, buffer);
+
+					send_message("Tahun Publikasi:\n");
+					receive_message();
+					strcpy(buku_input_year, buffer)
+						;
+					send_message("Filepath:\n");
+					receive_message();
+
+					char *fileinit = buffer + strlen(buffer);
+					char *filename = malloc(sizeof(char) * 64);
+
+					while (true){
+						if (*fileinit == '/'){
+							++fileinit;
+							break;
+						} else if (fileinit == buffer){
+							break;
+						}
+						--fileinit;
+					}
+
+					strcpy(filename, fileinit);
+					strcpy(buku_input_path, filename);
+
+					send_message("[$TRANSFER_UPLOAD]");
+					sleep(2);
+					send_message(buffer);
+					receive_message(); //read data
+					//printf("%s\n", buffer);
+					
+					printf("%s\n", filename);
+					printf("%s\n", buffer);
+
+					strcpy(filebuffer, buffer);
+					sprintf(tempbuffer, "FILES/%s", filename); //nama file
+
+					write_file(tempbuffer, filebuffer);
+					append_buku_file(buku_input_publisher, buku_input_year, buku_input_path);
+
+					free(filename);
+
+					send_message("File Upload Success!\n");
 				} else if (strcmp(buffer, "download") == 0){
-				
+					
 				} else if (strcmp(buffer, "delete") == 0){
 				
 				} else if (strcmp(buffer, "see") == 0){
