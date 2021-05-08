@@ -262,7 +262,7 @@ bool read_file(char *path){
 		return 0;
 	}
 
-	FILE *file = fopen(tempp, "r");
+	FILE *file = fopen(tempp, "rb");
 	fread(filebuffer, sizeof(char), 1024, file);
 
 	fclose(file);
@@ -271,7 +271,7 @@ bool read_file(char *path){
 }
 
 void write_file(char *path, char* content){
-	FILE *file = fopen(path, "w");
+	FILE *file = fopen(path, "wb");
 	fwrite(content, sizeof(char), 1024, file);
 	fclose(file);
 }
