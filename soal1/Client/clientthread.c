@@ -38,7 +38,7 @@ void read_file(char *path){
 
 void write_file(char *path, char *content){
 	FILE *file = fopen(path, "w");
-	fwrite(filebuffer, sizeof(char), 1024, file);
+	fwrite(content, sizeof(char), 1024, file);
 	fclose(file);
 }
 
@@ -57,11 +57,37 @@ void *receiver_func(void *args){
 				valread = read( sock , buffer, 1024);
 				printf("read : %s\n", buffer);
 				read_file(buffer);
-				printf("sendscok\n");
+				printf("Done uploading.\n");
 				send(sock , filebuffer , 1024 , 0);
 				continue;
 			} else if (strcmp(buffer, "[$TRANSFER_DOWNLOAD]") == 0){ //download prep signal
-				//belom
+				puts("valread");
+				sleep(1);
+				valread = read(sock, buffer, 1024); //path
+				printf("path adalah  : %s\n", buffer);
+
+				char *fileinit = buffer + strlen(buffer);
+				char *filename = malloc(sizeof(char) * 128);
+				while (true){
+					if (*fileinit == '/'){
+						++fileinit;
+						break;
+					} else if (fileinit == buffer){
+						break;
+					}
+					--fileinit;
+				}
+				strcpy(filename, fileinit);
+
+				sleep(1);
+				valread = read(sock, buffer, 1024); //content
+				printf("content adalah : %s\n", buffer);
+
+				printf("writing data..\n");
+				write_file(filename, buffer);
+				printf("Done downloading.\n");
+
+				free(filename);
 				continue;
 			}
 
