@@ -337,9 +337,15 @@ void goodbye_ui(){
 void help_ui(){
 	char *s = tempbuffer;
 	resetbuffer(s);
-	sprintf(s,"Help Mee!\n");
-	sprintf(s + strlen(s), "\n");
-	
+	sprintf(s,"Command List :!\n");	
+	sprintf(s + strlen(s), "add -> to upload data to server\n");
+	sprintf(s + strlen(s), "download -> to download data from server to client\n");
+	sprintf(s + strlen(s), "delete -> delete data from server\n");
+	sprintf(s + strlen(s), "see -> print all from book list\n");
+	sprintf(s + strlen(s), "find -> find pattern from book list\n");
+	sprintf(s + strlen(s), "logout -> to logout from current user\n");
+	sprintf(s + strlen(s), "exit -> to exit application\n");
+
 	send_message(tempbuffer);
 }
 
@@ -500,6 +506,12 @@ int main(int argc, char const *argv[]) {
 					send_message(buffer);
 					receive_message(); //read data
 					//printf("%s\n", buffer);
+					//
+					if (strcmp(buffer, "[$404_SIGNAL]") == 0){
+						send_message("File not found on local client!\n");
+						sapa_user_ui();
+						continue;
+					}
 					
 					printf("%s\n", filename);
 					printf("%s\n", buffer);
