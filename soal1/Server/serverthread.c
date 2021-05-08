@@ -35,9 +35,9 @@ FILE *akun_file;
 akun akun_data[10001] = {};
 int akun_data_size = 0;
 
-char akun_input_id[64] = {0};
-char akun_input_pass[64] = {0};
-char akun_input_pass_confirm[64] = {0};
+char akun_input_id[128] = {0};
+char akun_input_pass[128] = {0};
+char akun_input_pass_confirm[128] = {0};
 
 akun *logined_akun = NULL;
 bool is_running = true;
@@ -46,9 +46,11 @@ FILE *buku_file;
 buku buku_data[10001] = {};
 int buku_data_size = 0;
 
-char buku_input_path[64] = {0};
-char buku_input_publisher[64] = {0};
-char buku_input_year[64] = {0};
+char buku_input_name[128] = {0};
+char buku_input_ext[128] = {0};
+char buku_input_path[128] = {0};
+char buku_input_publisher[128] = {0};
+char buku_input_year[128] = {0};
 
 void make_directory(char *s){
 	mkdir(s, 0700);
@@ -88,9 +90,36 @@ void read_buku_file(bool show){
 			strcpy(buku_data[i].publisher, strtok(NULL, "\t"));
 			strcpy(buku_data[i].year, strtok(NULL, "\t"));
 
-			printf("Buku:\npath : %s\npublisher : %s\nyear : %s\n\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+			char *ptr = buku_data[i].path + strlen(buku_data[i].path);
+			while (ptr != buku_data[i].path && *ptr != '/'){
+				--ptr;
+			}
+
+			if (ptr != buku_data[i].path){
+				++ptr;
+			}
+
+			strcpy(buku_input_name, ptr);
+			//strcpy(buku_input_ext, strtok(buku_input_name, "."));
+			ptr = buku_input_name + strlen(buku_input_name);
+
+			while (ptr != buku_input_name && *ptr != '.'){
+				--ptr;
+			}
+
+			if (ptr != buku_input_name){
+				++ptr;
+			}
+
+			strcpy(buku_input_ext, ptr);
+
+
+			//strcpy(buku_input_name, buku_data[i].path);
+			//strcpy(buku_input_ext, strtok(buku_input_name, "."));
+
+			printf("Buku:\nname : %s\npublisher : %s\nyear : %s\nextension : %s\npath : %s\n\n", buku_input_name, buku_data[i].publisher, buku_data[i].year, buku_input_ext, buku_data[i].path);
 			if (show){
-				sprintf(tempbuffer,"Buku:\npath : %s\npublisher : %s\nyear : %s\n\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+				sprintf(tempbuffer,"Buku:\nname : %s\npublisher : %s\nyear : %s\nextension : %s\npath : %s\n\n", buku_input_name, buku_data[i].publisher, buku_data[i].year, buku_input_ext, buku_data[i].path);
 				send_message(tempbuffer);
 			}
 
@@ -140,8 +169,8 @@ void delete_buku_file(char *path){
 	}
 
 	if (found != -1){
-		char file_name[64] = {0};
-		char file_name_new[64] = {0};
+		char file_name[128] = {0};
+		char file_name_new[128] = {0};
 
 		sprintf(file_name, "FILES/%s", buku_data[found].path);
 		sprintf(file_name_new, "FILES/old-%s", buku_data[found].path);
@@ -303,6 +332,8 @@ int main(int argc, char const *argv[]) {
 
 	read_akun_file();
 	read_buku_file(false);
+
+	printf("Processing\n");
 
 	//Untuk konek
 
