@@ -70,6 +70,18 @@ void receive_message(){
 	valread = read(new_socket , buffer, 1024);
 }
 
+void audit_log(int mode, char *path){
+	if (logined_akun){
+		FILE *file = fopen("running.log", "a");
+		if (mode == 1){
+			fprintf(file, "Tambah : %s (%s:%s)\n", path, logined_akun->id, logined_akun->pass);
+		} else if (mode == 2){
+			fprintf(file, "Hapus : %s (%s:%s)\n", path, logined_akun->id, logined_akun->pass);
+		}
+		fclose(file);
+	}
+}
+
 void make_file(char *path){
 	FILE *file = fopen(path, "w");
 	fclose(file);
@@ -179,6 +191,8 @@ void delete_buku_file(char *path){
 		buku_data[found].path[0] = 0;
 		write_buku_file();
 
+		audit_log(2, path);
+
 		send_message("Book deleted successfully.\n");
 	} else {
 		send_message("Book not found\n");
@@ -238,10 +252,22 @@ void append_akun_file(char *id, char *pass){
 	printf("Done Write akun.txt data.\n");
 }
 
-void read_file(char *path){
-	FILE *file = fopen(path, "r");
-	fread(&filebuffer, sizeof(char), 1024, file);
+bool read_file(char *path){
+	struct stat st = {0};
+	char tempp[256] = {0};
+
+	sprintf(tempp, "FILES/%s", path);
+
+	if (stat(tempp, &st) == -1){
+		return 0;
+	}
+
+	FILE *file = fopen(tempp, "r");
+	fread(filebuffer, sizeof(char), 1024, file);
+
 	fclose(file);
+
+	return 1;
 }
 
 void write_file(char *path, char* content){
@@ -328,6 +354,10 @@ int main(int argc, char const *argv[]) {
 
 	if (stat("files.tsv", &st) == -1){
 		make_file("files.tsv");
+	}
+
+	if (stat("running.log", &st) == -1){
+		make_file("running.log");
 	}
 
 	read_akun_file();
@@ -479,16 +509,41 @@ int main(int argc, char const *argv[]) {
 
 					write_file(tempbuffer, filebuffer);
 					append_buku_file(buku_input_publisher, buku_input_year, buku_input_path);
+					
+					audit_log(1, filename);
 
 					free(filename);
 
 					send_message("File Upload Success!\n");
 				} else if (strcmp(buffer, "download") == 0){
-					
+					send_message("Prepare to download. Insert server path!\n");
+					send_message("path :\n");
+
+					receive_message();
+					strcpy(buku_input_path, buffer);
+
+					if (read_file(buku_input_path)){
+
+						printf("Trnasfer download\n");
+						send_message("[$TRANSFER_DOWNLOAD]");
+
+						printf("Waiting send path\n");
+						sleep(2);
+						send_message(buku_input_path);
+
+						printf("CONTENT : %s\n", filebuffer);
+	
+						printf("Waiting send content\n");
+						sleep(2);
+						send_message(filebuffer);
+					} else {
+						send_message("File not found on server!\n");
+					}
+
 				} else if (strcmp(buffer, "delete") == 0){
 					send_message("Delete file menu. Insert server path!\npath :\n");
 					receive_message();
-
+	
 					delete_buku_file(buffer);
 				} else if (strcmp(buffer, "see") == 0){
 					read_buku_file(true);
