@@ -9,10 +9,10 @@
 #define y 3
 #define z 6
 
-const int matrix1[x][y] = {{1, 2, 3}, {4, 5, 1}, {2, 3, 4}, {5, 1, 2}};
-const int matrix2[y][z] = {{1, 2, 3, 4, 5, 1}, {2, 3, 4, 5, 1, 2}, {3, 4, 5, 1, 2, 3}};
-// int matrix1[x][y];
-// int matrix2[y][z];
+// const int matrix1[x][y] = {{1, 2, 3}, {4, 5, 1}, {2, 3, 4}, {5, 1, 2}};
+// const int matrix2[y][z] = {{1, 2, 3, 4, 5, 1}, {2, 3, 4, 5, 1, 2}, {3, 4, 5, 1, 2, 3}};
+int matrix1[x][y];
+int matrix2[y][z];
 int result[x][z];
 
 pthread_t tid[x*z];
@@ -59,22 +59,23 @@ void join_thread(){
 }
 
 int main(void){
+    printf("Input Matrix 1\n");
+    for (int i = 0; i < x; ++i) {
+      for (int j = 0; j < y; ++j) {
+         printf("Enter a%d%d: ", i + 1, j + 1);
+         scanf("%d", &matrix1[i][j]);
+      }
+    }
 
-    // printf("Input Matrix 1\n");
-    // for (int i = 0; i < x; ++i) {
-    //   for (int j = 0; j < y; ++j) {
-    //      printf("Enter a%d%d: ", i + 1, j + 1);
-    //      scanf("%d", &matrix1[i][j]);
-    //   }
-    // }
+    printf("Input Matrix 2\n");
+    for (int i = 0; i < y; ++i) {
+      for (int j = 0; j < z; ++j) {
+         printf("Enter a%d%d: ", i + 1, j + 1);
+         scanf("%d", &matrix2[i][j]);
+      }
+    }
 
-    // printf("Input Matrix 2\n");
-    // for (int i = 0; i < y; ++i) {
-    //   for (int j = 0; j < z; ++j) {
-    //      printf("Enter a%d%d: ", i + 1, j + 1);
-    //      scanf("%d", &matrix2[i][j]);
-    //   }
-    // }
+    printf("\n");
 
     int shmid = shmget(key, sizeof(matrix), IPC_CREAT | 0666);
     matrix = shmat(shmid, 0, 0);
