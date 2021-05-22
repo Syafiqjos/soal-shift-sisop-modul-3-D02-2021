@@ -79,10 +79,10 @@ void *move_file(void *argv){
 	
 	if (mode == 0){
 		if (!failed) {
-			printf ( "File %d : Berhasil Dikategorikan\n",inde - 1);
+			printf ( "File %d : Berhasil Dikategorikan\n",inde);
 		}
 	    	else {
-		    	printf( "File %d : Sad, gagal :(\n", inde - 1 );
+		    	printf( "File %d : Sad, gagal :(\n", inde);
 		}
 	}
 }
@@ -139,6 +139,7 @@ int main(int argc, char* argv[]) {
 			
 			rec_args *argg = malloc(sizeof(rec_args));
 			argg->path = argv[i];
+			argg->inde = i - 1;
 
 			pthread_create(&tid[i], NULL, move_file, (void *) argg); 
 		}
