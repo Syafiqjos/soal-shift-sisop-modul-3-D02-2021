@@ -73,7 +73,7 @@ void *move_file(void *argv){
 
 	sprintf(filepath, "%s/%s", folderpath, file);
 
-	printf("%s\n", filepath);
+	//printf("%s\n", filepath);
 
 	int failed = rename(path , filepath); 
 	
