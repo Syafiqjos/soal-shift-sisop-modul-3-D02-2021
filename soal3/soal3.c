@@ -16,6 +16,9 @@
 #include <errno.h>
 #include <time.h>
 
+// 0 == -f, 1 == -d
+int mode = 0;
+
 typedef struct {
 	char *path;
 	int inde;
@@ -69,14 +72,18 @@ void *move_file(void *argv){
 	make_directory(folderpath);
 
 	sprintf(filepath, "%s/%s", folderpath, file);
- 
-	int failed = rename(path , folderpath); 
+
+	printf("%s\n", filepath);
+
+	int failed = rename(path , filepath); 
 	
-	if (!failed) {
-		printf ( "File %d : Berhasil Dikategorikan\n",inde - 1);
-	}
-    	else {
-	    	printf( "File %d : Sad, gagal :(\n", inde - 1 );
+	if (mode == 0){
+		if (!failed) {
+			printf ( "File %d : Berhasil Dikategorikan\n",inde - 1);
+		}
+	    	else {
+		    	printf( "File %d : Sad, gagal :(\n", inde - 1 );
+		}
 	}
 }
 
@@ -142,6 +149,7 @@ int main(int argc, char* argv[]) {
 	}
 	
 	else if(strcmp(argv[1], "-d") == 0){
+		mode = 1;
 		if(errno != 2) {
 			rec(argv[2]);
 			printf("Direktori sukses disimpan!\n");
