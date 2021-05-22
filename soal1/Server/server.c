@@ -12,14 +12,14 @@
 #define PORT 8080
 
 typedef struct {
-	char id[64];
-	char pass[64];
+	char id[256];
+	char pass[256];
 } akun;
 
 typedef struct {
-	char path[64];
-	char publisher[64];
-	char year[64];
+	char path[256];
+	char publisher[256];
+	char year[256];
 } buku;
 
 int server_fd, new_socket, valread;
@@ -28,29 +28,30 @@ int opt = 1;
 int addrlen = sizeof(address);
 char buffer[1024] = { 0 };
 char sendbuffer[1024] = { 0 };
-char tempbuffer[1024] = { 0 };
+char tempbuffer[1024 * 4] = { 0 };
 char filebuffer[1024] = { 0 };
 
 FILE *akun_file;
 akun akun_data[10001] = {};
 int akun_data_size = 0;
 
-char akun_input_id[128] = {0};
-char akun_input_pass[128] = {0};
-char akun_input_pass_confirm[128] = {0};
+char akun_input_id[256] = {0};
+char akun_input_pass[256] = {0};
+char akun_input_pass_confirm[256] = {0};
 
 akun *logined_akun = NULL;
 bool is_running = true;
+bool socket_connect = false;
 
 FILE *buku_file;
 buku buku_data[10001] = {};
 int buku_data_size = 0;
 
-char buku_input_name[128] = {0};
-char buku_input_ext[128] = {0};
-char buku_input_path[128] = {0};
-char buku_input_publisher[128] = {0};
-char buku_input_year[128] = {0};
+char buku_input_name[256] = {0};
+char buku_input_ext[256] = {0};
+char buku_input_path[256] = {0};
+char buku_input_publisher[256] = {0};
+char buku_input_year[256] = {0};
 
 void make_directory(char *s){
 	mkdir(s, 0700);
@@ -88,7 +89,7 @@ void make_file(char *path){
 }
 
 void read_buku_file(bool show){
-	char data_temp[256] = {};
+	char data_temp[1024 * 8] = {};
 
 	int i = 0;
 
@@ -98,6 +99,7 @@ void read_buku_file(bool show){
 
 	while (fscanf(buku_file, " %[^\n]", data_temp) != EOF){
 		if (strlen(data_temp) > 0){
+			printf("Original : %s\n", data_temp);
 			strcpy(buku_data[i].path, strtok(data_temp, "\t"));
 			strcpy(buku_data[i].publisher, strtok(NULL, "\t"));
 			strcpy(buku_data[i].year, strtok(NULL, "\t"));
@@ -174,15 +176,44 @@ void find_buku_file(char *pattern){
 void delete_buku_file(char *path){
 	int found = -1;
 	int i = 0;
+
+	char *find_name;
+	char *next_find_name;
+
 	for (;i < buku_data_size;i++){
-		if (strcmp(path, buku_data[i].path) == 0){
+		/*
+		find_name = buku_data[i].path;
+		next_find_name = strtok(find_name, "/");
+		while (true){
+			next_find_name = strtok(NULL, "/");
+			if (next_find_name == NULL){
+				break;
+			}
+			find_name = next_find_name;
+		}
+		*/
+
+		find_name = buku_data[i].path + strlen(buku_data[i].path);
+
+		while (find_name != buku_data[i].path){
+			if (*find_name == '/'){
+				find_name++;
+				break;
+			}
+			find_name--;
+		}
+		printf("%s == %s\n", path, find_name);
+
+		//if (strcmp(path, buku_data[i].path) == 0){
+		if (strcmp(path, find_name) == 0){
+		//if (strstr(path, buku_data[i].path)){
 			found = i;
 		}
 	}
 
 	if (found != -1){
-		char file_name[128] = {0};
-		char file_name_new[128] = {0};
+		char file_name[512] = {0};
+		char file_name_new[512] = {0};
 
 		sprintf(file_name, "FILES/%s", buku_data[found].path);
 		sprintf(file_name_new, "FILES/old-%s", buku_data[found].path);
@@ -204,7 +235,19 @@ void append_buku_file(char *publisher, char *year, char *path){
 
 	printf("Writing files.tsv data..\n");
 
-	fprintf(buku_file, "%s\t%s\t%s\n", path, publisher, year);
+	char *abs_path = malloc(sizeof(char) * 1024);
+
+	sprintf(abs_path, "%s/FILES/%s" ,getcwd(NULL, 0), path);
+
+	//strcpy(abs_path, getcwd(NULL, 0));
+	//strcat(abs_path, "/FILES/");
+	//strcat(abs_path, path);
+
+	printf("saved to abs_path : %s\n", abs_path);
+
+	fprintf(buku_file, "%s\t%s\t%s\n", abs_path, publisher, year);
+
+	free(abs_path);
 
 	fclose(buku_file);
 
@@ -369,16 +412,13 @@ int main(int argc, char const *argv[]) {
 	read_akun_file();
 	read_buku_file(false);
 
-	printf("Processing\n");
-
-	//Untuk konek
-
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
 		perror("socket failed");
 		exit(EXIT_FAILURE);
 	}
 
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+	//reuse port and address
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) == -1) {
 		perror("setsockopt");
 		exit(EXIT_FAILURE);
 	}
@@ -391,6 +431,16 @@ int main(int argc, char const *argv[]) {
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	}
+
+	//reconnecting client
+
+	while(true){
+	
+	printf("Processing..\n");
+
+	sleep(1);
+
+	printf("Waiting Connection..\n");
 
 	if (listen(server_fd, 3) < 0) {
 		perror("listen");
@@ -457,7 +507,7 @@ int main(int argc, char const *argv[]) {
 				
 			} else if (strcmp(buffer, "3") == 0){
 				send_message("exit\n");
-				is_running = false;
+				//is_running = false;
 				break;
 			} else {
 				send_message("command not right\n");
@@ -486,7 +536,7 @@ int main(int argc, char const *argv[]) {
 					receive_message();
 
 					char *fileinit = buffer + strlen(buffer);
-					char *filename = malloc(sizeof(char) * 64);
+					char *filename = malloc(sizeof(char) * 256);
 
 					while (true){
 						if (*fileinit == '/'){
@@ -583,5 +633,8 @@ int main(int argc, char const *argv[]) {
 	}
 
 	goodbye_ui();
+	resetbuffer(sendbuffer);
+	printf("bye\n");
+	}
 	return 0;
 }
