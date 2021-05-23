@@ -941,8 +941,35 @@ Tidak ada kendala untuk soal ini.
 
 ### 1G. Fitur agar client dapat mendapat informasi setiap buku sesuai dengan filter yang ada di server
 #### Source Code
+```c
+void find_buku_file(char *pattern){
+	int i = 0;
+	for (;i < buku_data_size;i++){
+		if (strstr(buku_data[i].path, pattern) || strstr(buku_data[i].publisher, pattern) || strstr(buku_data[i].year, pattern)){
+				sprintf(tempbuffer,"Buku:\npath : %s\npublisher : %s\nyear : %s\n\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+				send_message(tempbuffer);
+		}
+	}
+}
+```
+
+```c
+				} else if (strcmp(buffer, "find") == 0){
+					send_message("Find book menu. Input pattern to find book contains provided pattern!\npattern :\n");
+					receive_message();
+
+					find_buku_file(buffer);
+				}
+```
 #### Cara Pengerjaan
+1. Membuat fungsi `find_buku_file` untuk mempermudah pencarian buku sesuai dengan pattern yang diberikan.
+2. Saat masuk pada kondisi find, maka menjalankan fungsi `find_buku_file` dengan argument yang diberikan oleh client.
+3. Fungsi `find_buku_file` bekerja dengan cara melakukan iterasi pada array of `book` yang dimana pada setiap iterasi tersebut mencari data buku yang cocok dengan pattern yang diberikan. Jika terdapat pattern yang sesuai maka kirim output tersebut kepada client.
+4. Untuk melakukan check pattern dapat menggunakan fungsi `strstr`. Fungsi ini melakukan check apakah pada suatu string terdapat substring atau tidak. Jika ada maka akan mengembalikan indeks substring tersebut.
+5. Jika tidak ada buku yang cocok sama sekali maka tidak mengirim output apapun kepada client.
+
 #### Kendala
+Tidak ada kendala pada soal ini.
 
 ### 1H. Fitur agar server dapat menyimpan log perubahan file yang dilakukan client
 #### Source Code
