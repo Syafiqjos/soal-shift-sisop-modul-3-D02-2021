@@ -401,6 +401,41 @@ void append_akun_file(char *id, char *pass){
 - Untuk setiap pengiriman file dan pengiriman pesan yang terjadi pada server maupun client diberikan timout sebesar 1 - 2 detik. Hal ini dilakukan untuk meminimalisasikan error kebocoran data yang dapat terjadi. Terdapat suatu hal yang membuat data yang dikirim sama dengan pesan yang dikirim jika tidak diberikan timeout atau jeda.
 - Untuk melakukan multi-connection hal yang perlu dilakukan adalah melakukan listen ulang pada client yang baru, bukan melakukan bind ulang. Karena jika socket melakukan bind ulang terdapat error berupa Port / Address is in use meskipun pada proses yang sama.
 
+### 1B. Membuat system database informasi buku
+#### Source Code
+#### Cara Pengerjaan
+#### Kendala
+
+### 1C. Fitur agar client dapat menambahkan buku serta mengupload file buku
+#### Source Code
+#### Cara Pengerjaan
+#### Kendala
+
+### 1D. Fitur agar client dapat mendownload buku dari server
+#### Source Code
+#### Cara Pengerjaan
+#### Kendala
+
+### 1E. Fitur agar client dapat menghapus data buku di server
+#### Source Code
+#### Cara Pengerjaan
+#### Kendala
+
+### 1F. Fitur agar client dapat mendapat informasi setiap buku yang ada di server
+#### Source Code
+#### Cara Pengerjaan
+#### Kendala
+
+### 1G. Fitur agar client dapat mendapat informasi setiap buku sesuai dengan filter yang ada di server
+#### Source Code
+#### Cara Pengerjaan
+#### Kendala
+
+### 1H. Fitur agar server dapat menyimpan log perubahan file yang dilakukan client
+#### Source Code
+#### Cara Pengerjaan
+#### Kendala
+
 ## Soal 2
 ### Tujuan
 Melakukan operasi perkalian dan faktorial pada dua matrix menggunakan shared memory dan melakukan pengecekan 5 proses teratas
