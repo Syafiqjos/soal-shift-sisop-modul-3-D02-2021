@@ -1634,10 +1634,15 @@ Saat ujicoba program awal, ada masalah saat menjalankan opsi \*. Hal ini dikaren
 #### Hasil Running Program
 # Referensi
 ## 1
+1. https://www.geeksforgeeks.org/socket-programming-cc
+2. https://www.binarytides.com/socket-programming-c-linux-tutorial/
+
 ## 2
 1. https://www.programiz.com/c-programming/examples/matrix-multiplication
 2. https://stackoverflow.com/questions/8082932/connecting-n-commands-with-pipes-in-a-shell
 3. https://gist.github.com/mplewis/5279108
 4. https://www.geeksforgeeks.org/multiplication-of-matrix-using-threads/
 5. https://github.com/Daemshad/Matrix-Multiply-Using-Threads/blob/master/main.c
+
 ## 3
+1. https://stackoverflow.com/questions/1352749/multiple-arguments-to-function-called-by-pthread-create
