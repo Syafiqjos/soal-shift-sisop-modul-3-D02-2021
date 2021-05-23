@@ -1579,7 +1579,9 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 ```
+
 ![image](https://user-images.githubusercontent.com/16128257/119264216-68dee680-bc0c-11eb-8c04-517649d48a5a.png)
+
 2. Menjalankan opsi -f
 ```
 
