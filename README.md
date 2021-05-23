@@ -564,6 +564,9 @@ void write_buku_file(){
 5. Membuat fungsi `write_buku_file` untuk melakukan write file `files.tsv` sesuai dengan array of `buku` yang ada pada program.
 6. Membuat fungsi `append_buku_file` ini dipanggil ketika client melakukan registrasi user baru pada program. `fopen` append digunakan untuk mempermudah penambahan pada file yang telah ada, sehingga tidak kesulitan atau tidak seberat `write_buku_file` yang melakukan penulisan ulang buku.
 
+#### Contoh Output
+
+
 #### Kendala
 
 Tidak ada kendala pada soal ini.
@@ -691,6 +694,9 @@ void append_buku_file(char *publisher, char *year, char *path){
 5. Path pada `write_file` akan disimpan pada folder `FILES` yang telah dibuat dengan nama file sama dengan nama file yang dikirim client.
 6. Selanjutnya melakukan update pada array of `book` pada fungsi `append_buku_file` yang sekalian menambah informasi buku pada `files.tsv`.
 
+#### Contoh Output
+![image](https://user-images.githubusercontent.com/16128257/119264699-6b424000-bc0e-11eb-97dd-a27ea7ecb70e.png)
+
 #### Kendala
 1. Terdapat kendala saat melakukan upload file dari client karena hanya terdapat satu jalur untuk penerimaan pesan. Oleh karena itu kita harus menggunakan flag indikator `[$TRANSFER_UPLOAD]` dari client agar server mengetahui bahwa data yang akan dikirim selanjutnya merupakan sebuah data buku, bukan input dari client.
 2. Juga ketika file tidak ditemukan menggunakan flag indikator `[$404_SIGNAL]` sehingga server tahu jika file path yang diberikan client tidak ada pada storage local client.
@@ -784,6 +790,13 @@ bool read_file(char *path){
 5. Terdapat timeout sekitar 2 detik menggunakan fungsi `sleep(2)`. Hal ini dilakukan agar jalur yang digunakan untuk pengiriman terdapat jeda, sehingga data yang akan dikirimkan tidak akan menumpuk.
 6. Setelah file download berhasil maka server akan kembali pada interpreter global.
 
+#### Contoh Output
+Client
+![image](https://user-images.githubusercontent.com/16128257/119264781-afcddb80-bc0e-11eb-8ddd-63ef38b96f26.png)
+
+Server
+![image](https://user-images.githubusercontent.com/16128257/119264787-b52b2600-bc0e-11eb-8d93-5d6a6f864d1d.png)
+
 #### Kendala
 1. Terdapat kendala saat melakukan download file dari server karena hanya terdapat satu jalur untuk penerimaan pesan. Oleh karena itu kita harus menggunakan flag indikator `[$TRANSFER_DOWNLOAD]` dari server agar client mengetahui bahwa data yang akan diterima selanjutnya merupakan sebuah data buku, bukan output dari server.
 
@@ -866,6 +879,13 @@ void write_buku_file(){
 3. Melakukan pengecheckan pada array of `book`, jika terdapat `book` yang memiliki basename sama dengan nama file yang diberikan client maka data tersebut akan dihapus.
 4. Karena menghapus buku pada `files.tsv` akan sulit, maka kami memutuskan untuk melakukan write ulang pada `files.tsv` menggunakan fungsi `write_buku_file`. Fungsi ini akan menulis file `files.tsv` sesuai dengan array of `book` yang ada pada program.
 5. Sesuai dengan perintah, file buku yang akan dihapus tidak akan dihapus sepenuhnya, melainka melakukan rename dan ditambahkan `old-` pada depan file buku tersebut. Rename buku ini menggunakan fungsi `rename` yang default ada pada module yang diimport yang kami gunakan.
+
+#### Contoh Output
+Client
+![image](https://user-images.githubusercontent.com/16128257/119264809-d4c24e80-bc0e-11eb-9c0d-c3260c6af06d.png)
+
+Server
+![image](https://user-images.githubusercontent.com/16128257/119264819-ddb32000-bc0e-11eb-85c3-bd6317700903.png)
 
 #### Kendala
 Tidak ada kendala pada soal ini.
@@ -950,6 +970,9 @@ void read_buku_file(bool show){
 #### Kendala
 Tidak ada kendala untuk soal ini.
 
+#### Contoh Output
+![image](https://user-images.githubusercontent.com/16128257/119264877-00453900-bc0f-11eb-95d9-702fa27ccd50.png)
+
 ### 1G. Fitur agar client dapat mendapat informasi setiap buku sesuai dengan filter yang ada di server
 #### Source Code
 ```c
@@ -978,6 +1001,9 @@ void find_buku_file(char *pattern){
 3. Fungsi `find_buku_file` bekerja dengan cara melakukan iterasi pada array of `book` yang dimana pada setiap iterasi tersebut mencari data buku yang cocok dengan pattern yang diberikan. Jika terdapat pattern yang sesuai maka kirim output tersebut kepada client.
 4. Untuk melakukan check pattern dapat menggunakan fungsi `strstr`. Fungsi ini melakukan check apakah pada suatu string terdapat substring atau tidak. Jika ada maka akan mengembalikan indeks substring tersebut.
 5. Jika tidak ada buku yang cocok sama sekali maka tidak mengirim output apapun kepada client.
+
+#### Contoh Output
+![image](https://user-images.githubusercontent.com/16128257/119264921-1fdc6180-bc0f-11eb-80f9-70b1baaf5251.png)
 
 #### Kendala
 Tidak ada kendala pada soal ini.
@@ -1052,6 +1078,9 @@ Pada saat add book
 5. Pada saat user melakukan delete book maka akan menjalankan fungsi `audit_log` dengan mode 2, yaitu mode delete.
 6. Pada fungsi `audit_log` terdapat mode untuk mempermudah logging. Jika mode adalah 1 maka akan menulis log untuk add, sedangkan mode 2 akan menulis log delete.
 7. Untuk menuliskan informasi user kita akan memanfaatkan variable `logined_akun` yang telah dibuat, sehingga pada saat melakukan logging file kita dapat menggunakan variable ini untuk mendapatkan `id` dari user yang sedang login.
+
+#### Contoh Output
+![image](https://user-images.githubusercontent.com/16128257/119264949-3aaed600-bc0f-11eb-94ec-655790ea3e4f.png)
 
 #### Kendala
 Tidak ada kendala pada soal ini.
