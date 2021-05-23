@@ -426,6 +426,17 @@ void register_akun(char *id, char *pass){
 8. Membuat fungsi `registrasi_akun` untuk mempermudah melakukan registrasi akun baru pada interpreter yang diinput client.
 9. Membuat fungsi `login_akun` untuk melakukan login sesuai dengan id dan password yang diberikan client.
 
+#### Contoh Output Program
+
+Percobaan multi-connection, pada kiri adalah server, kanan atas client yang berhasil connect, kiri bawah client yang mencoba connect dan masih menunggu hingga client1 exit.
+![image](https://user-images.githubusercontent.com/16128257/119264470-91b3ab80-bc0d-11eb-9cf0-7b4497853af0.png)
+
+Percobaan register dan login client.
+![image](https://user-images.githubusercontent.com/16128257/119264540-dc352800-bc0d-11eb-8208-4b4dced489b2.png)
+
+Hasil akun.txt
+![image](https://user-images.githubusercontent.com/16128257/119264575-fa028d00-bc0d-11eb-8fc9-3ae3608cdd35.png)
+
 #### Kendala
 - Untuk setiap pengiriman file dan pengiriman pesan yang terjadi pada server maupun client diberikan timout sebesar 1 - 2 detik. Hal ini dilakukan untuk meminimalisasikan error kebocoran data yang dapat terjadi. Terdapat suatu hal yang membuat data yang dikirim sama dengan pesan yang dikirim jika tidak diberikan timeout atau jeda.
 - Untuk melakukan multi-connection hal yang perlu dilakukan adalah melakukan listen ulang pada client yang baru, bukan melakukan bind ulang. Karena jika socket melakukan bind ulang terdapat error berupa Port / Address is in use meskipun pada proses yang sama.
