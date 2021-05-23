@@ -349,7 +349,190 @@ Apabila dijalankan, program tidak bisa keluar dengan sendirinya, harus menggunak
 ### Tujuan
 Membuat sebuah program untuk mengkategorikan file dan direktori yang tersedia.
 
+### Cara Pengerjaan
+Sebelum menjalankan fungsi main, kita terlebih dahulu membuat beberapa fungsi yang diperlukan dalam program
 
+1. Menentukan opsi yang akan dijalankan dan membuat struct rec_args
+```
+// 0 == -f, 1 == -d
+int mode = 0;
+
+typedef struct {
+	char *path;
+	int inde;
+} rec_args;
+```
+2. Membuat fungsi untuk mengambil ekstensi
+ ```
+ char *get_extension(char *filename) {
+	if(filename[0] == '.') {
+	    return "Hidden"; 
+	}
+	
+	char *temp = strchr(filename, '.');
+	
+	if(!temp) {
+		return "Unknown";
+	}
+
+    return temp + 1;
+}
+```
+3. Membuat fungsi pembuat folder
+```
+//make folder
+void make_directory (char *dir) {
+	struct stat st;
+	if (stat(dir, &st) == -1) {
+		mkdir(dir, 0777);
+	}
+}
+```
+4. Membuat program pemindah file
+```void *move_file(void *argv){
+	char *path;
+	int inde;
+	char cwd[128], folder[128], folderpath[400], filepath[512]; 
+
+	rec_args *argg = (rec_args *)argv;
+
+	path = argg->path;
+	inde = argg->inde;
+
+       	getcwd(cwd, sizeof(cwd));
+
+       	char* file = basename(path);
+       	strcpy(folder, get_extension(file));
+ 
+       	if (strcmp(folder, "Hidden") != 0 && strcmp(folder,"Unknown") != 0) {
+	      	for(int i = 0; i < strlen(folder); i++) {
+		     	folder[i] = tolower(folder[i]);
+		}
+	}
+```
+Untuk menjalankan opsi -f, kita juga membuat outputnya
+```
+sprintf(folderpath, "%s/%s", cwd, folder);
+
+	make_directory(folderpath);
+
+	sprintf(filepath, "%s/%s", folderpath, file);
+
+	//printf("%s\n", filepath);
+
+	int failed = rename(path , filepath); 
+	
+	if (mode == 0){
+		if (!failed) {
+			printf ( "File %d : Berhasil Dikategorikan\n",inde);
+		}
+	    	else {
+		    	printf( "File %d : Sad, gagal :(\n", inde);
+		}
+	}
+}
+```
+5. Membuat fungsi untuk menelusuri folder dan file di komputer
+5a. Membuka folder
+```
+void rec(char *argv){
+	int k = 2; 
+	struct dirent *dp;
+	DIR *dir = opendir(argv);
+ 
+
+       pthread_t thread[1000];
+ ```
+ 5b. Menelusuri dan membaca file (apabila langsung ditemukan file)
+ ```
+   while ((dp = readdir(dir)) != NULL) {
+	     char path[512];
+ 
+	     if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0) {
+		  if(dp->d_type == DT_REG) {
+		      if (strcmp(dp->d_name, "soal3") != 0 && strcmp(dp->d_name, "soal3.c") != 0 && strcmp(dp->d_name, "a.out") != 0) {
+			      sprintf(path, "%s/%s", argv, dp->d_name);
+	
+			      rec_args *argg = malloc(sizeof(rec_args));
+			      argg->path = path;
+
+			      pthread_create(&thread[k], NULL, move_file, (void *) argg);
+			      pthread_join(thread[k], NULL);
+			      k++;
+		      }
+	       	  }
+```
+Dalam mengecek file, kita perlu memisahkan file-file yang berhubungan dengan program pada soal ini (misalnya seperti soal3 dan soal3.c pada kode)
+5c. Menelusuri dan membuka folder (jika masih ada folder didalam folder)
+```
+  else if(dp->d_type == DT_DIR) {
+		      	  struct dirent *ep;
+		   	  DIR *dp2 = opendir(argv);
+		      	  char path2[512];
+    
+			  sprintf(path2, "%s/%s", argv, dp->d_name);
+		      	  rec(path2);
+		   	  closedir(dp2);
+	       	  }
+	     }
+       }
+       closedir(dir);
+}
+```
+Setelah membuat fungsi-fungsi yang diperlukan, selanjutnya kita beranjak ke fungsi main.
+### Cara Pengerjaan
+1. Mengecek apakah opsi -f dan/atau -d diperlukan/tersedia
+```
+int main(int argc, char* argv[]) {
+	if (argc == 0 || argc == 1){
+		printf("Tidak ada argument -f atau -d ditemukan\n");
+		return 0;
+	}
+```
+2. Menjalankan opsi -f
+```
+
+	if (strcmp(argv[1], "-f") == 0){
+		pthread_t tid[1000];
+		for(int i = 2; i < argc; i++){
+			
+			rec_args *argg = malloc(sizeof(rec_args));
+			argg->path = argv[i];
+			argg->inde = i - 1;
+
+			pthread_create(&tid[i], NULL, move_file, (void *) argg); 
+		}
+	
+		for(int j = 2; j < argc; j++)  {
+			pthread_join(tid[j],NULL);
+		}
+	}
+```
+3. Menjalankan opsi -d
+```
+else if(strcmp(argv[1], "-d") == 0){
+		mode = 1;
+		if(errno != 2) {
+			rec(argv[2]);
+			printf("Direktori sukses disimpan!\n");
+		}
+		else {
+		     	printf("Yah, gagal disimpan :(\n");
+		}
+	}
+```
+4.Menjalankan opsi *
+```
+else if (strcmp(argv[1], "*") == 0) {
+		char cwd[128];
+		getcwd(cwd, sizeof(cwd));
+		rec(cwd);
+	}
+}
+```
+#### Kendala
+Saat ujicoba program awal, ada masalah saat menjalankan opsi * dan diperbaiki setelah itu.
+#### Hasil Running Program
 # Referensi
 ## 1
 ## 2
