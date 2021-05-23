@@ -861,8 +861,83 @@ Tidak ada kendala pada soal ini.
 
 ### 1F. Fitur agar client dapat mendapat informasi setiap buku yang ada di server
 #### Source Code
+```c
+void read_buku_file(bool show){
+	char data_temp[1024 * 8] = {};
+
+	int i = 0;
+
+	buku_file = fopen("files.tsv", "r");
+
+	printf("Reading files.tsv data..\n");
+
+	while (fscanf(buku_file, " %[^\n]", data_temp) != EOF){
+		if (strlen(data_temp) > 0){
+			printf("Original : %s\n", data_temp);
+			strcpy(buku_data[i].path, strtok(data_temp, "\t"));
+			strcpy(buku_data[i].publisher, strtok(NULL, "\t"));
+			strcpy(buku_data[i].year, strtok(NULL, "\t"));
+
+			char *ptr = buku_data[i].path + strlen(buku_data[i].path);
+			while (ptr != buku_data[i].path && *ptr != '/'){
+				--ptr;
+			}
+
+			if (ptr != buku_data[i].path){
+				++ptr;
+			}
+
+			strcpy(buku_input_name, ptr);
+			//strcpy(buku_input_ext, strtok(buku_input_name, "."));
+			ptr = buku_input_name + strlen(buku_input_name);
+
+			while (ptr != buku_input_name && *ptr != '.'){
+				--ptr;
+			}
+
+			if (ptr != buku_input_name){
+				++ptr;
+			}
+
+			strcpy(buku_input_ext, ptr);
+
+
+			//strcpy(buku_input_name, buku_data[i].path);
+			//strcpy(buku_input_ext, strtok(buku_input_name, "."));
+
+			printf("Buku:\nname : %s\npublisher : %s\nyear : %s\nextension : %s\npath : %s\n\n", buku_input_name, buku_data[i].publisher, buku_data[i].year, buku_input_ext, buku_data[i].path);
+			if (show){
+				sprintf(tempbuffer,"Buku:\nname : %s\npublisher : %s\nyear : %s\nextension : %s\npath : %s\n\n", buku_input_name, buku_data[i].publisher, buku_data[i].year, buku_input_ext, buku_data[i].path);
+				send_message(tempbuffer);
+			}
+
+			i++;
+		}
+	}
+
+	buku_data_size = i;
+
+	fclose(buku_file);
+
+	printf("Done Reading files.csv data.\n");
+}
+```
+
+```c
+				} else if (strcmp(buffer, "see") == 0){
+					read_buku_file(true);
+				}
+```
+
 #### Cara Pengerjaan
+1. Membuat fungsi `read_buku_file` untuk melakukan read ulang pada `files.tsv` dan melakukan output informasi - informasi buku yang ada didalamnya.
+2. Kami memutuskan untuk menggunakan fungsi `read_buku_file` dan tidak membuat fungsi baru karena menurut kami hal ini mirip dengan `read_buku_file` yang sebelumnya. Hal ini dibedakan dengan parameter `show` yang bernilai true saat pemanggilan `see` dari client. Argument show yang bernilai true akan mengirimkan informasi data buku kepada client.
+3. Menggunakan fungsi `strtok` untuk melakukan split dari line raw `files.tsv` yang dipisahkan `\t`.
+4. Memasukkan hasil split pada variable yang sesuai lalu mengirimkan output pada client.
+5. Client hanya akan mengoutputkan pesan yang dikirim dari server seperti biasanya.
+
 #### Kendala
+Tidak ada kendala untuk soal ini.
 
 ### 1G. Fitur agar client dapat mendapat informasi setiap buku sesuai dengan filter yang ada di server
 #### Source Code
