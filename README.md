@@ -128,13 +128,278 @@ int main(int argc, char const *argv[]) {
 5. Karena thread pada `receiver_func` selalu berjalan sehingga dapat selalu menerima data dari server, maka `receiver_func` menggunakan `while (is_running)` sehingga thread akan berhenti ketika `is_running` bernilai false.
 6. Terdapat beberapa kondisi special yang digunakan sebagai indikasi bahwa pada server telah melakukan logout / exit, indikasi server akan menerima upload file dan indikasi client akan menerima download file. Hal ini hanya akan diatur server, sehingga client akan menerima indikator yang diberikan tersebut dan memutuskan apa yang harus dilakukan pada thread.
 7. Download file dan Upload file tetap menggunakan jalur yang sama dengan pengiriman dan penerimaan pesan, untuk itulah indikator yang dijelaskan sebelumnya akan sangat dibutuhkan.
-8. Untuk setiap pengiriman file dan pengiriman pesan yang terjadi diberikan timout sebesar 1 - 2 detik. Hal ini dilakukan untuk meminimalisasikan error kebocoran data yang dapat terjadi. Terdapat suatu hal yang membuat data yang dikirim sama dengan pesan yang dikirim jika tidak diberikan timeout atau jeda.
 
 #### Server
 #### Source Code
+```c
+void write_file(char *path, char* content){
+	FILE *file = fopen(path, "wb");
+	fwrite(content, sizeof(char), 1024, file);
+	fclose(file);
+}
+```
+
+```c
+void read_akun_file(){
+	char data_temp[256] = {};
+
+	int i = 0;
+
+	akun_file = fopen("akun.txt", "r");
+
+	printf("Reading akun.txt data..\n");
+
+	while (fscanf(akun_file, " %[^\n]", data_temp) != EOF){
+		if (strlen(data_temp) > 0){
+			strcpy(akun_data[i].id, strtok(data_temp, ":"));
+			strcpy(akun_data[i].pass, strtok(NULL, ":"));
+
+			printf("%s -> %s\n", akun_data[i].id, akun_data[i].pass);
+
+			i++;
+		}
+	}
+
+	akun_data_size = i;
+
+	fclose(akun_file);
+
+	printf("Done Reading akun.txt data.\n");
+}
+```
+
+```c
+void append_akun_file(char *id, char *pass){
+	akun_file = fopen("akun.txt", "a");
+
+	printf("Writing akun.txt data..\n");
+
+	fprintf(akun_file, "%s:%s\n", id, pass);
+
+	fclose(akun_file);
+
+	printf("Done Write akun.txt data.\n");
+}
+```
+
+```c
+//reconnecting client
+
+	while(true){
+	
+	printf("Processing..\n");
+
+	sleep(1);
+
+	printf("Waiting Connection..\n");
+
+	if (listen(server_fd, 3) < 0) {
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
+
+	if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0) {
+		perror("accept");
+		exit(EXIT_FAILURE);
+	}
+
+	//Mulai konek
+
+	receive_message();
+	home_ui(sendbuffer);
+
+	while (is_running){
+		if (!logined_akun){ //if not login
+			receive_message();
+			if (strcmp(buffer, "1") == 0){
+				send_message("Register - Enter your id and pass\n> id :\n");
+				receive_message();
+				strcpy(akun_input_id, buffer);
+
+				send_message("> pass :\n");
+				receive_message();
+				strcpy(akun_input_pass, buffer);
+
+				send_message("> pass confirmation :\n");
+				receive_message();
+				strcpy(akun_input_pass_confirm, buffer);
+
+				if (strcmp(akun_input_pass, akun_input_pass_confirm) == 0){
+					if (login_akun(akun_input_id, akun_input_pass) == 2) { //kalau gagal login, user tidak ada maka register
+						register_akun(akun_input_id, akun_input_pass);
+						send_message("Register success!\n\nPlease login to continue\n\n");
+					} else {
+						send_message("Register failed!\n\nUser exists!\n\n");
+					}
+				} else {
+					send_message("Register failed!\n\nPass confirm not match!\n\n");
+				}
+				logout_akun();
+				home_ui();
+			} else if (strcmp(buffer, "2") == 0){
+				send_message("Login - Enter your id and pass\n> id :\n");
+				receive_message();
+				strcpy(akun_input_id, buffer);
+
+				send_message("> pass :\n");
+				receive_message();
+				strcpy(akun_input_pass, buffer);
+
+				int login_status = login_akun(akun_input_id, akun_input_pass);
+				if (login_status == 0){
+					send_message("Login success!\n\n");
+				} else if (login_status == 1){
+					send_message("Password invalid!\n\n");
+				} else if (login_status == 2){
+					send_message("User not found!\n\n");
+				}
+
+				home_ui();
+				
+			} else if (strcmp(buffer, "3") == 0){
+				send_message("exit\n");
+				//is_running = false;
+				break;
+			} else {
+				send_message("command not right\n");
+				home_ui();
+			}
+		} else {
+			//logined
+			send_message("\nLogin success!\n");
+			
+			sapa_user_ui();
+
+			while (is_running && logined_akun){
+				receive_message();
+				
+				if (strcmp(buffer, "add") == 0){
+					send_message("Insert book data!\n\n");
+					send_message("Publisher:\n");
+					receive_message();
+					strcpy(buku_input_publisher, buffer);
+
+					send_message("Tahun Publikasi:\n");
+					receive_message();
+					strcpy(buku_input_year, buffer)
+						;
+					send_message("Filepath:\n");
+					receive_message();
+
+					char *fileinit = buffer + strlen(buffer);
+					char *filename = malloc(sizeof(char) * 256);
+
+					while (true){
+						if (*fileinit == '/'){
+							++fileinit;
+							break;
+						} else if (fileinit == buffer){
+							break;
+						}
+						--fileinit;
+					}
+
+					strcpy(filename, fileinit);
+					strcpy(buku_input_path, filename);
+
+					send_message("[$TRANSFER_UPLOAD]");
+					sleep(2);
+					send_message(buffer);
+					receive_message(); //read data
+					//printf("%s\n", buffer);
+					//
+					if (strcmp(buffer, "[$404_SIGNAL]") == 0){
+						send_message("File not found on local client!\n");
+						sapa_user_ui();
+						continue;
+					}
+					
+					printf("%s\n", filename);
+					printf("%s\n", buffer);
+
+					strcpy(filebuffer, buffer);
+					sprintf(tempbuffer, "FILES/%s", filename); //nama file
+
+					write_file(tempbuffer, filebuffer);
+					append_buku_file(buku_input_publisher, buku_input_year, buku_input_path);
+					
+					audit_log(1, filename);
+
+					free(filename);
+
+					send_message("File Upload Success!\n");
+				} else if (strcmp(buffer, "download") == 0){
+					send_message("Prepare to download. Insert server path!\n");
+					send_message("path :\n");
+
+					receive_message();
+					strcpy(buku_input_path, buffer);
+
+					if (read_file(buku_input_path)){
+
+						printf("Trnasfer download\n");
+						send_message("[$TRANSFER_DOWNLOAD]");
+
+						printf("Waiting send path\n");
+						sleep(2);
+						send_message(buku_input_path);
+
+						printf("CONTENT : %s\n", filebuffer);
+	
+						printf("Waiting send content\n");
+						sleep(2);
+						send_message(filebuffer);
+					} else {
+						send_message("File not found on server!\n");
+					}
+
+				} else if (strcmp(buffer, "delete") == 0){
+					send_message("Delete file menu. Insert server path!\npath :\n");
+					receive_message();
+	
+					delete_buku_file(buffer);
+				} else if (strcmp(buffer, "see") == 0){
+					read_buku_file(true);
+				} else if (strcmp(buffer, "find") == 0){
+					send_message("Find book menu. Input pattern to find book contains provided pattern!\npattern :\n");
+					receive_message();
+
+					find_buku_file(buffer);
+				} else if (strcmp(buffer, "logout") == 0){
+					logout_akun();
+					send_message("Logout success!\n\n");
+					break;
+				} else if (strcmp(buffer, "exit") == 0){
+					logout_akun();
+					is_running = false;
+					break;
+				} else if (strcmp(buffer, "help") == 0){
+					help_ui();
+				}
+				sapa_user_ui();
+			
+			}
+			home_ui();
+		}
+	}
+
+	goodbye_ui();
+	resetbuffer(sendbuffer);
+	printf("bye\n");
+	}
+```
 #### Cara pengerjaan
+1. Pada dasarnya, programming socket yang digunakan sama seperti modul, tetapi terdapat beberapa modifikasi.
+2. Server melakukan seluruh aplikasi database yang digunakan, terdapat interpreter yang terjadi pada program server yang input tersebut dikirim dari aplikasi client.
+3. Server memiliki 2 state utama, yaitu belum login dan telah login. Sehingga dibuat suatu sistem akun yang menyimpan informasi user yang sedang login saat ini.
+4. Penyimpanan informasi login disimpan pada file yang bernama `akun.txt`. Untuk membuat kode konsisten, jika file ini tidak ada maka akan membuat file `akun.txt` menggunakan fungsi `write_file()` pada awal program.
+5. Jika `akun.txt` ada maka kita bisa gunakan fungsi `read_akun_file()` untuk mendapatkan informasi akun dari `akun.txt`.
+6. Ketika interpreter memutuskan untuk membuat akun baru maka dilakukan append pada `akun.txt` sebuah id dan password nya menggunakan fungsi `append_akun_file()`.
+7. Ketika user berhasil login maka user akan dipindah ke halaman selanjutnya yaitu halaman untuk user yang berhasil login / interpreter selanjutnya.
 
 #### Kendala
+- Untuk setiap pengiriman file dan pengiriman pesan yang terjadi pada server maupun client diberikan timout sebesar 1 - 2 detik. Hal ini dilakukan untuk meminimalisasikan error kebocoran data yang dapat terjadi. Terdapat suatu hal yang membuat data yang dikirim sama dengan pesan yang dikirim jika tidak diberikan timeout atau jeda.
+- Untuk melakukan multi-connection hal yang perlu dilakukan adalah melakukan listen ulang pada client yang baru, bukan melakukan bind ulang. Karena jika socket melakukan bind ulang terdapat error berupa Port / Address is in use meskipun pada proses yang sama.
 
 ## Soal 2
 ### Tujuan
