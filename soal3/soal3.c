@@ -3,6 +3,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/prctl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -88,7 +89,7 @@ void *move_file(void *argv){
 }
 
 //traversal to files and folder
-void rec(char *argv){
+void rec(char *argv, bool readfolder){
 	int k = 2; 
 	struct dirent *dp;
 	DIR *dir = opendir(argv);
@@ -113,13 +114,13 @@ void rec(char *argv){
 			      k++;
 		      }
 	       	  }
-	       	  else if(dp->d_type == DT_DIR) {
+	       	  else if(dp->d_type == DT_DIR && readfolder) {
 		      	  struct dirent *ep;
 		   	  DIR *dp2 = opendir(argv);
 		      	  char path2[512];
     
 			  sprintf(path2, "%s/%s", argv, dp->d_name);
-		      	  rec(path2);
+		      	  rec(path2, true);
 		   	  closedir(dp2);
 	       	  }
 	     }
@@ -152,16 +153,37 @@ int main(int argc, char* argv[]) {
 	else if(strcmp(argv[1], "-d") == 0){
 		mode = 1;
 		if(errno != 2) {
-			rec(argv[2]);
+			rec(argv[2], true);
 			printf("Direktori sukses disimpan!\n");
 		}
 		else {
 		     	printf("Yah, gagal disimpan :(\n");
 		}
 	}
-	else if (strcmp(argv[1], "*") == 0) {
+	//else if (strcmp(argv[1], "*") == 0) {
+	else {
 		char cwd[128];
 		getcwd(cwd, sizeof(cwd));
-		rec(cwd);
+
+		mode = 1;
+
+		char* folder = dirname(argv[1]);
+
+		char newfolder[256];
+
+		sprintf(newfolder, "%s/%s", cwd, folder);
+
+		//rec_args *argg = malloc(sizeof(rec_args));
+		//argg->path = argv[1];
+		
+		//pthread_t tid[10];
+		//pthread_create(&tid[0], NULL, move_file, (void *) argg);
+		//pthread_join(tid[1], NULL);
+		//
+		
+		//printf("%s\n",newfolder);
+		rec(newfolder, false);
+
+		printf("Files sukses dikategorikan!\n");
 	}
 }
