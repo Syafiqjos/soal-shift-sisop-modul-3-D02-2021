@@ -561,7 +561,7 @@ Tidak ada kendala pada soal ini.
 #### Source Code
 #### Client
 ```c
-else if (strcmp(buffer, "[$TRANSFER_UPLOAD]") == 0) { //upload prep signal
+			else if (strcmp(buffer, "[$TRANSFER_UPLOAD]") == 0) { //upload prep signal
 				printf("Uploading..\n");
 				sleep(1);
 				valread = read( sock , buffer, 1024);
@@ -615,7 +615,7 @@ void append_buku_file(char *publisher, char *year, char *path){
 ```
 
 ```c
-if (strcmp(buffer, "add") == 0){
+				if (strcmp(buffer, "add") == 0){
 					send_message("Insert book data!\n\n");
 					send_message("Publisher:\n");
 					receive_message();
@@ -686,8 +686,95 @@ if (strcmp(buffer, "add") == 0){
 
 ### 1D. Fitur agar client dapat mendownload buku dari server
 #### Source Code
+#### Client
+```c
+			} else if (strcmp(buffer, "[$TRANSFER_DOWNLOAD]") == 0){ //download prep signal
+				printf("Downloading..\n");
+				sleep(1);
+				valread = read(sock, buffer, 1024); //path
+
+				char *fileinit = buffer + strlen(buffer);
+				char *filename = malloc(sizeof(char) * 128);
+				while (true){
+					if (*fileinit == '/'){
+						++fileinit;
+						break;
+					} else if (fileinit == buffer){
+						break;
+					}
+					--fileinit;
+				}
+				strcpy(filename, fileinit);
+
+				sleep(1);
+				valread = read(sock, buffer, 1024); //content
+
+				printf("writing data..\n");
+				write_file(filename, buffer);
+				printf("Done downloading.\n");
+
+				free(filename);
+				continue;
+			}
+```
+
+#### Server
+```c
+bool read_file(char *path){
+	struct stat st = {0};
+	char tempp[256] = {0};
+
+	sprintf(tempp, "FILES/%s", path);
+
+	if (stat(tempp, &st) == -1){
+		return 0;
+	}
+
+	FILE *file = fopen(tempp, "rb");
+	fread(filebuffer, sizeof(char), 1024, file);
+
+	fclose(file);
+
+	return 1;
+}
+```
+
+```c
+				else if (strcmp(buffer, "download") == 0){
+					send_message("Prepare to download. Insert server path!\n");
+					send_message("path :\n");
+
+					receive_message();
+					strcpy(buku_input_path, buffer);
+
+					if (read_file(buku_input_path)){
+
+						printf("Trnasfer download\n");
+						send_message("[$TRANSFER_DOWNLOAD]");
+
+						printf("Waiting send path\n");
+						sleep(2);
+						send_message(buku_input_path);
+
+						printf("CONTENT : %s\n", filebuffer);
+	
+						printf("Waiting send content\n");
+						sleep(2);
+						send_message(filebuffer);
+					} else {
+						send_message("File not found on server!\n");
+					}
+```
 #### Cara Pengerjaan
+1. Membuat fungsi `read_file` untuk membaca file dan mengecheck apakah file ada atau tidak, jika ada maka fungsi akan mengisi `filebuffer` yang akan digunakan untuk mengirim data buku dari server ke client.
+2. Pada saat kondisi download, melakukan check jika file ada pada server, jika tidak ada maka proses akan di skip dan kembali ke interpreter global.
+3. Jika file ada maka server mengirim flag indikator `[$TRANSFER_DOWNLOAD]` sehingga client tahu jika data yang akan dikirim selanjutnya merupakan data buku bukan pesan biasa.
+4. Client menerima data buku tersebut yang kemudian disimpan pada folder program dijalankan.
+5. Terdapat timeout sekitar 2 detik menggunakan fungsi `sleep(2)`. Hal ini dilakukan agar jalur yang digunakan untuk pengiriman terdapat jeda, sehingga data yang akan dikirimkan tidak akan menumpuk.
+6. Setelah file download berhasil maka server akan kembali pada interpreter global.
+
 #### Kendala
+1. Terdapat kendala saat melakukan download file dari server karena hanya terdapat satu jalur untuk penerimaan pesan. Oleh karena itu kita harus menggunakan flag indikator `[$TRANSFER_DOWNLOAD]` dari server agar client mengetahui bahwa data yang akan diterima selanjutnya merupakan sebuah data buku, bukan output dari server.
 
 ### 1E. Fitur agar client dapat menghapus data buku di server
 #### Source Code
