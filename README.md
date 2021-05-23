@@ -778,8 +778,86 @@ bool read_file(char *path){
 
 ### 1E. Fitur agar client dapat menghapus data buku di server
 #### Source Code
+```c
+void delete_buku_file(char *path){
+	int found = -1;
+	int i = 0;
+
+	char *find_name;
+	char *next_find_name;
+
+	for (;i < buku_data_size;i++){
+		find_name = buku_data[i].path + strlen(buku_data[i].path);
+
+		while (find_name != buku_data[i].path){
+			if (*find_name == '/'){
+				find_name++;
+				break;
+			}
+			find_name--;
+		}
+		printf("%s == %s\n", path, find_name);
+
+		if (strcmp(path, find_name) == 0){
+			found = i;
+		}
+	}
+
+	if (found != -1){
+		char file_name[512] = {0};
+		char file_name_new[512] = {0};
+
+		sprintf(file_name, "FILES/%s", buku_data[found].path);
+		sprintf(file_name_new, "FILES/old-%s", buku_data[found].path);
+		rename(file_name, file_name_new);
+
+		buku_data[found].path[0] = 0;
+		write_buku_file();
+
+		audit_log(2, path);
+
+		send_message("Book deleted successfully.\n");
+	} else {
+		send_message("Book not found\n");
+	}
+}
+```
+
+```c
+void write_buku_file(){
+	buku_file = fopen("files.tsv", "w");
+
+	int i = 0;
+	for(;i < buku_data_size;i++){
+		if (buku_data[i].path[0] != 0){
+			fprintf(buku_file, "%s\t%s\t%s\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+		}
+	}
+
+	fclose(buku_file);
+
+	read_buku_file(false);
+}
+```
+
+```c
+				} else if (strcmp(buffer, "delete") == 0){
+					send_message("Delete file menu. Insert server path!\npath :\n");
+					receive_message();
+	
+					delete_buku_file(buffer);
+				}
+```
+
 #### Cara Pengerjaan
+1. Membuat fungsi `delete_buku_file` untuk mempermudah melakukan delete buku.
+2. Client mengirim informasi tentang path buku yang akan dihapus dari `files.tsv`.
+3. Melakukan pengecheckan pada array of `book`, jika terdapat `book` yang memiliki basename sama dengan nama file yang diberikan client maka data tersebut akan dihapus.
+4. Karena menghapus buku pada `files.tsv` akan sulit, maka kami memutuskan untuk melakukan write ulang pada `files.tsv` menggunakan fungsi `write_buku_file`. Fungsi ini akan menulis file `files.tsv` sesuai dengan array of `book` yang ada pada program.
+5. Sesuai dengan perintah, file buku yang akan dihapus tidak akan dihapus sepenuhnya, melainka melakukan rename dan ditambahkan `old-` pada depan file buku tersebut. Rename buku ini menggunakan fungsi `rename` yang default ada pada module yang diimport yang kami gunakan.
+
 #### Kendala
+Tidak ada kendala pada soal ini.
 
 ### 1F. Fitur agar client dapat mendapat informasi setiap buku yang ada di server
 #### Source Code
