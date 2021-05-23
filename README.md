@@ -565,10 +565,13 @@ void write_buku_file(){
 6. Membuat fungsi `append_buku_file` ini dipanggil ketika client melakukan registrasi user baru pada program. `fopen` append digunakan untuk mempermudah penambahan pada file yang telah ada, sehingga tidak kesulitan atau tidak seberat `write_buku_file` yang melakukan penulisan ulang buku.
 
 #### Contoh Output
+Catatan : Contoh output setelah command add dari client.
 
+![image](https://user-images.githubusercontent.com/16128257/119265010-6762ed80-bc0f-11eb-9ee9-8a212cfea538.png)
+
+![image](https://user-images.githubusercontent.com/16128257/119265065-90837e00-bc0f-11eb-8086-df539cf52f6f.png)
 
 #### Kendala
-
 Tidak ada kendala pada soal ini.
 
 ### 1C. Fitur agar client dapat menambahkan buku serta mengupload file buku
