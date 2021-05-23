@@ -973,8 +973,77 @@ Tidak ada kendala pada soal ini.
 
 ### 1H. Fitur agar server dapat menyimpan log perubahan file yang dilakukan client
 #### Source Code
+```c
+akun *logined_akun = NULL;
+```
+
+```c
+void audit_log(int mode, char *path){
+	if (logined_akun){
+		FILE *file = fopen("running.log", "a");
+		if (mode == 1){
+			fprintf(file, "Tambah : %s (%s:%s)\n", path, logined_akun->id, logined_akun->pass);
+		} else if (mode == 2){
+			fprintf(file, "Hapus : %s (%s:%s)\n", path, logined_akun->id, logined_akun->pass);
+		}
+		fclose(file);
+	}
+}
+```
+
+Pada Fungsi delete_book_file
+```c
+if (found != -1){
+		char file_name[512] = {0};
+		char file_name_new[512] = {0};
+
+		sprintf(file_name, "FILES/%s", buku_data[found].path);
+		sprintf(file_name_new, "FILES/old-%s", buku_data[found].path);
+		rename(file_name, file_name_new);
+
+		buku_data[found].path[0] = 0;
+		write_buku_file();
+
+		audit_log(2, path);
+
+		send_message("Book deleted successfully.\n");
+	} else {
+		send_message("Book not found\n");
+	}
+```
+
+Pada saat add book
+```c
+					strcpy(filebuffer, buffer);
+					sprintf(tempbuffer, "FILES/%s", filename); //nama file
+
+					write_file(tempbuffer, filebuffer);
+					append_buku_file(buku_input_publisher, buku_input_year, buku_input_path);
+					
+					audit_log(1, filename);
+
+					free(filename);
+
+					send_message("File Upload Success!\n");
+```
+
+```c
+	if (stat("running.log", &st) == -1){
+		make_file("running.log");
+	}
+```
+
 #### Cara Pengerjaan
+1. Membuat variable `logined_akun` untuk melakukan track akun dengan id dan pass apa yang sedang login.
+2. Membuat fungsi `audit_log` untuk mempermudah melakukan audit pada `running.log`
+3. Pada saat awal program dijalankan, menjalankan `make_file("running.log")` untuk membuat file `running.log`.
+4. Pada saat user melakukan add book maka akan menjalankan fungsi `audit_log` dengan mode 1, yaitu mode add.
+5. Pada saat user melakukan delete book maka akan menjalankan fungsi `audit_log` dengan mode 2, yaitu mode delete.
+6. Pada fungsi `audit_log` terdapat mode untuk mempermudah logging. Jika mode adalah 1 maka akan menulis log untuk add, sedangkan mode 2 akan menulis log delete.
+7. Untuk menuliskan informasi user kita akan memanfaatkan variable `logined_akun` yang telah dibuat, sehingga pada saat melakukan logging file kita dapat menggunakan variable ini untuk mendapatkan `id` dari user yang sedang login.
+
 #### Kendala
+Tidak ada kendala pada soal ini.
 
 ## Soal 2
 ### Tujuan
