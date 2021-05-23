@@ -403,8 +403,158 @@ void append_akun_file(char *id, char *pass){
 
 ### 1B. Membuat system database informasi buku
 #### Source Code
+
+```c
+typedef struct {
+	char path[256];
+	char publisher[256];
+	char year[256];
+} buku;
+```
+
+```c
+void make_directory(char *s){
+	mkdir(s, 0700);
+}
+```
+
+```c
+void make_file(char *path){
+	FILE *file = fopen(path, "w");
+	fclose(file);
+}
+```
+
+```c
+void read_buku_file(bool show){
+	char data_temp[1024 * 8] = {};
+
+	int i = 0;
+
+	buku_file = fopen("files.tsv", "r");
+
+	printf("Reading files.tsv data..\n");
+
+	while (fscanf(buku_file, " %[^\n]", data_temp) != EOF){
+		if (strlen(data_temp) > 0){
+			printf("Original : %s\n", data_temp);
+			strcpy(buku_data[i].path, strtok(data_temp, "\t"));
+			strcpy(buku_data[i].publisher, strtok(NULL, "\t"));
+			strcpy(buku_data[i].year, strtok(NULL, "\t"));
+
+			char *ptr = buku_data[i].path + strlen(buku_data[i].path);
+			while (ptr != buku_data[i].path && *ptr != '/'){
+				--ptr;
+			}
+
+			if (ptr != buku_data[i].path){
+				++ptr;
+			}
+
+			strcpy(buku_input_name, ptr);
+			//strcpy(buku_input_ext, strtok(buku_input_name, "."));
+			ptr = buku_input_name + strlen(buku_input_name);
+
+			while (ptr != buku_input_name && *ptr != '.'){
+				--ptr;
+			}
+
+			if (ptr != buku_input_name){
+				++ptr;
+			}
+
+			strcpy(buku_input_ext, ptr);
+
+
+			//strcpy(buku_input_name, buku_data[i].path);
+			//strcpy(buku_input_ext, strtok(buku_input_name, "."));
+
+			printf("Buku:\nname : %s\npublisher : %s\nyear : %s\nextension : %s\npath : %s\n\n", buku_input_name, buku_data[i].publisher, buku_data[i].year, buku_input_ext, buku_data[i].path);
+			if (show){
+				sprintf(tempbuffer,"Buku:\nname : %s\npublisher : %s\nyear : %s\nextension : %s\npath : %s\n\n", buku_input_name, buku_data[i].publisher, buku_data[i].year, buku_input_ext, buku_data[i].path);
+				send_message(tempbuffer);
+			}
+
+			i++;
+		}
+	}
+
+	buku_data_size = i;
+
+	fclose(buku_file);
+
+	printf("Done Reading files.csv data.\n");
+}
+```
+
+```c
+void write_buku_file(){
+	buku_file = fopen("files.tsv", "w");
+
+	int i = 0;
+	for(;i < buku_data_size;i++){
+		if (buku_data[i].path[0] != 0){
+			fprintf(buku_file, "%s\t%s\t%s\n", buku_data[i].path, buku_data[i].publisher, buku_data[i].year);
+		}
+	}
+
+	fclose(buku_file);
+
+	read_buku_file(false);
+}
+```
+
+```c
+int login_akun(char *id, char *pass){
+	int i = 0;
+	for (;i < akun_data_size;i++){
+		if (strcmp(akun_data[i].id, id) == 0){
+			if (strcmp(akun_data[i].pass, pass) == 0){
+				logined_akun = &akun_data[i];
+				return 0; //success
+			} else {
+				return 1; //false pass
+			}
+		}
+	}
+	return 2; //not found
+}
+```
+
+```c
+void register_akun(char *id, char *pass){
+	strcpy(akun_data[akun_data_size].id, id);
+	strcpy(akun_data[akun_data_size].pass, pass);
+	akun_data_size++;
+	append_akun_file(id, pass);
+}
+```
+
+```c
+	//Preparation
+	make_directory("./FILES");
+	
+	struct stat st = {0};
+	if (stat("akun.txt", &st) == -1){
+		make_file("akun.txt");
+	}
+	
+	read_buku_file(false);
+```
+
 #### Cara Pengerjaan
+1. Membuat fungsi `make_directory` yang didalamnya terdapat fungsi `mkdir` sehingga tidak perlu lagi memberikan permission secara berulang - ulang.
+2. Fungsi `make_directory` digunakan untuk membuat directory `FILES` seperti yang diperintahkan. Fungsi ini dipanggil saat awal program berjalan.
+3. Pada awal program juga memanggil fungsi `make_file` untuk membuat file `files.tsv` kosong jika file belum ada.
+4. Membuat fungsi `read_buku_file` untuk membaca file `files.tsv` yang telah dibuat atau yang telah ada. Fungsi ini akan mengisi array of `buku` yang telah dibuat. Fungsi ini dipanggil pada awal program serta jika terdapat refresh pada `files.tsv` sehingga array pada program sesuai dengan file ini.
+5. Membuat fungsi `write_buku_file` untuk melakukan write file `files.tsv` sesuai dengan array of `buku` yang ada pada program.
+6. Membuat fungsi `append_buku_file` ini dipanggil ketika client melakukan registrasi user baru pada program. `fopen` append digunakan untuk mempermudah penambahan pada file yang telah ada, sehingga tidak kesulitan atau tidak seberat `write_buku_file` yang melakukan penulisan ulang buku.
+7. Membuat fungsi `registrasi_akun` untuk mempermudah melakukan registrasi akun baru pada interpreter yang diinput client.
+8. Membuat fungsi `login_akun` untuk melakukan login sesuai dengan id dan password yang diberikan client.
+
 #### Kendala
+
+Tidak ada kendala pada soal ini.
 
 ### 1C. Fitur agar client dapat menambahkan buku serta mengupload file buku
 #### Source Code
