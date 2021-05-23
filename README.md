@@ -182,6 +182,33 @@ void append_akun_file(char *id, char *pass){
 }
 ```
 
+
+```c
+int login_akun(char *id, char *pass){
+	int i = 0;
+	for (;i < akun_data_size;i++){
+		if (strcmp(akun_data[i].id, id) == 0){
+			if (strcmp(akun_data[i].pass, pass) == 0){
+				logined_akun = &akun_data[i];
+				return 0; //success
+			} else {
+				return 1; //false pass
+			}
+		}
+	}
+	return 2; //not found
+}
+```
+
+```c
+void register_akun(char *id, char *pass){
+	strcpy(akun_data[akun_data_size].id, id);
+	strcpy(akun_data[akun_data_size].pass, pass);
+	akun_data_size++;
+	append_akun_file(id, pass);
+}
+```
+
 ```c
 //reconnecting client
 
@@ -396,6 +423,8 @@ void append_akun_file(char *id, char *pass){
 5. Jika `akun.txt` ada maka kita bisa gunakan fungsi `read_akun_file()` untuk mendapatkan informasi akun dari `akun.txt`.
 6. Ketika interpreter memutuskan untuk membuat akun baru maka dilakukan append pada `akun.txt` sebuah id dan password nya menggunakan fungsi `append_akun_file()`.
 7. Ketika user berhasil login maka user akan dipindah ke halaman selanjutnya yaitu halaman untuk user yang berhasil login / interpreter selanjutnya.
+8. Membuat fungsi `registrasi_akun` untuk mempermudah melakukan registrasi akun baru pada interpreter yang diinput client.
+9. Membuat fungsi `login_akun` untuk melakukan login sesuai dengan id dan password yang diberikan client.
 
 #### Kendala
 - Untuk setiap pengiriman file dan pengiriman pesan yang terjadi pada server maupun client diberikan timout sebesar 1 - 2 detik. Hal ini dilakukan untuk meminimalisasikan error kebocoran data yang dapat terjadi. Terdapat suatu hal yang membuat data yang dikirim sama dengan pesan yang dikirim jika tidak diberikan timeout atau jeda.
@@ -505,32 +534,6 @@ void write_buku_file(){
 ```
 
 ```c
-int login_akun(char *id, char *pass){
-	int i = 0;
-	for (;i < akun_data_size;i++){
-		if (strcmp(akun_data[i].id, id) == 0){
-			if (strcmp(akun_data[i].pass, pass) == 0){
-				logined_akun = &akun_data[i];
-				return 0; //success
-			} else {
-				return 1; //false pass
-			}
-		}
-	}
-	return 2; //not found
-}
-```
-
-```c
-void register_akun(char *id, char *pass){
-	strcpy(akun_data[akun_data_size].id, id);
-	strcpy(akun_data[akun_data_size].pass, pass);
-	akun_data_size++;
-	append_akun_file(id, pass);
-}
-```
-
-```c
 	//Preparation
 	make_directory("./FILES");
 	
@@ -549,8 +552,6 @@ void register_akun(char *id, char *pass){
 4. Membuat fungsi `read_buku_file` untuk membaca file `files.tsv` yang telah dibuat atau yang telah ada. Fungsi ini akan mengisi array of `buku` yang telah dibuat. Fungsi ini dipanggil pada awal program serta jika terdapat refresh pada `files.tsv` sehingga array pada program sesuai dengan file ini.
 5. Membuat fungsi `write_buku_file` untuk melakukan write file `files.tsv` sesuai dengan array of `buku` yang ada pada program.
 6. Membuat fungsi `append_buku_file` ini dipanggil ketika client melakukan registrasi user baru pada program. `fopen` append digunakan untuk mempermudah penambahan pada file yang telah ada, sehingga tidak kesulitan atau tidak seberat `write_buku_file` yang melakukan penulisan ulang buku.
-7. Membuat fungsi `registrasi_akun` untuk mempermudah melakukan registrasi akun baru pada interpreter yang diinput client.
-8. Membuat fungsi `login_akun` untuk melakukan login sesuai dengan id dan password yang diberikan client.
 
 #### Kendala
 
@@ -558,8 +559,130 @@ Tidak ada kendala pada soal ini.
 
 ### 1C. Fitur agar client dapat menambahkan buku serta mengupload file buku
 #### Source Code
+#### Client
+```c
+else if (strcmp(buffer, "[$TRANSFER_UPLOAD]") == 0) { //upload prep signal
+				printf("Uploading..\n");
+				sleep(1);
+				valread = read( sock , buffer, 1024);
+				if (!read_file(buffer)){
+					sleep(1);
+					sprintf(sendbuffer, "[$404_SIGNAL]");
+					send(sock, sendbuffer, 1024, 0);
+					continue;
+				}
+				printf("Done uploading.\n");
+				send(sock , filebuffer , 1024 , 0);
+				continue;
+			}
+```
+
+#### Server
+```c
+void write_file(char *path, char* content){
+	FILE *file = fopen(path, "wb");
+	fwrite(content, sizeof(char), 1024, file);
+	fclose(file);
+}
+```
+
+```c
+void append_buku_file(char *publisher, char *year, char *path){
+	buku_file = fopen("files.tsv", "a");
+
+	printf("Writing files.tsv data..\n");
+
+	char *abs_path = malloc(sizeof(char) * 1024);
+
+	sprintf(abs_path, "%s/FILES/%s" ,getcwd(NULL, 0), path);
+
+	//strcpy(abs_path, getcwd(NULL, 0));
+	//strcat(abs_path, "/FILES/");
+	//strcat(abs_path, path);
+
+	printf("saved to abs_path : %s\n", abs_path);
+
+	fprintf(buku_file, "%s\t%s\t%s\n", abs_path, publisher, year);
+
+	free(abs_path);
+
+	fclose(buku_file);
+
+	read_buku_file(false);
+
+	printf("Done Write files.tsv data.\n");
+}
+```
+
+```c
+if (strcmp(buffer, "add") == 0){
+					send_message("Insert book data!\n\n");
+					send_message("Publisher:\n");
+					receive_message();
+					strcpy(buku_input_publisher, buffer);
+
+					send_message("Tahun Publikasi:\n");
+					receive_message();
+					strcpy(buku_input_year, buffer)
+						;
+					send_message("Filepath:\n");
+					receive_message();
+
+					char *fileinit = buffer + strlen(buffer);
+					char *filename = malloc(sizeof(char) * 256);
+
+					while (true){
+						if (*fileinit == '/'){
+							++fileinit;
+							break;
+						} else if (fileinit == buffer){
+							break;
+						}
+						--fileinit;
+					}
+
+					strcpy(filename, fileinit);
+					strcpy(buku_input_path, filename);
+
+					send_message("[$TRANSFER_UPLOAD]");
+					sleep(2);
+					send_message(buffer);
+					receive_message(); //read data
+					//printf("%s\n", buffer);
+					//
+					if (strcmp(buffer, "[$404_SIGNAL]") == 0){
+						send_message("File not found on local client!\n");
+						sapa_user_ui();
+						continue;
+					}
+					
+					printf("%s\n", filename);
+					printf("%s\n", buffer);
+
+					strcpy(filebuffer, buffer);
+					sprintf(tempbuffer, "FILES/%s", filename); //nama file
+
+					write_file(tempbuffer, filebuffer);
+					append_buku_file(buku_input_publisher, buku_input_year, buku_input_path);
+					
+					audit_log(1, filename);
+
+					free(filename);
+
+					send_message("File Upload Success!\n");
+```
+
 #### Cara Pengerjaan
+1. Membuat fungsi `append_buku_file` untuk membuka file buku `fopen` dengan cara append untuk mempermudah melakukan write pada `files.tsv`.
+2. Ketika memasukkan buku, client mengirim data informasi Publisher, Tahun dan Path pada client. Disini send dan receive diatur pada kondisi `add` saja seperti pada code, tidak menggunakan interpreter global seperti sebelum masuk kondisi `add`.
+3. Ketika client mengirimkan `path` buku, maka client melakukan check pada file local client, jika file tidak ada maka client akan mengirim flag `[$404_SIGNAL]` sehingga server tahu jika file tidak ada pada client sehingga request `add` dibatalkan.
+4. Namun ketika file ada maka client akan mengirim data file kepada server, sehingga jalur receive server akan terisi dengan data buku. Ketika file buku telah didapatkan, maka server menyimpan dengan menggunakan fungsi `write_file` pada path yang diberikan client dan content merupakan isi transfer file tersebut.
+5. Path pada `write_file` akan disimpan pada folder `FILES` yang telah dibuat dengan nama file sama dengan nama file yang dikirim client.
+6. Selanjutnya melakukan update pada array of `book` pada fungsi `append_buku_file` yang sekalian menambah informasi buku pada `files.tsv`.
+
 #### Kendala
+1. Terdapat kendala saat melakukan upload file dari client karena hanya terdapat satu jalur untuk penerimaan pesan. Oleh karena itu kita harus menggunakan flag indikator `[$TRANSFER_UPLOAD]` dari client agar server mengetahui bahwa data yang akan dikirim selanjutnya merupakan sebuah data buku, bukan input dari client.
+2. Juga ketika file tidak ditemukan menggunakan flag indikator `[$404_SIGNAL]` sehingga server tahu jika file path yang diberikan client tidak ada pada storage local client.
 
 ### 1D. Fitur agar client dapat mendownload buku dari server
 #### Source Code
