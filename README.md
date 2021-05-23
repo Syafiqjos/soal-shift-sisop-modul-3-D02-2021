@@ -345,6 +345,11 @@ Apabila dijalankan, program tidak bisa keluar dengan sendirinya, harus menggunak
 #### Hasil Running Program
 ![image](https://user-images.githubusercontent.com/62937814/118837814-5e141100-b8ef-11eb-9bc1-262929280cc9.png)
 
+## Soal 3
+### Tujuan
+Membuat sebuah program untuk mengkategorikan file dan direktori yang tersedia.
+
+
 # Referensi
 ## 1
 ## 2
