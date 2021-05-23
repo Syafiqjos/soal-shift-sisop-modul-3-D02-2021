@@ -173,15 +173,6 @@ int main(int argc, char* argv[]) {
 
 		sprintf(newfolder, "%s/%s", cwd, folder);
 
-		//rec_args *argg = malloc(sizeof(rec_args));
-		//argg->path = argv[1];
-		
-		//pthread_t tid[10];
-		//pthread_create(&tid[0], NULL, move_file, (void *) argg);
-		//pthread_join(tid[1], NULL);
-		//
-		
-		//printf("%s\n",newfolder);
 		rec(newfolder, false);
 
 		printf("Files sukses dikategorikan!\n");
