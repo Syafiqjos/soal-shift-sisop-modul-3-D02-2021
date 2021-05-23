@@ -1524,6 +1524,7 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 ```
+![image](https://user-images.githubusercontent.com/16128257/119264216-68dee680-bc0c-11eb-8c04-517649d48a5a.png)
 2. Menjalankan opsi -f
 ```
 
@@ -1543,6 +1544,10 @@ int main(int argc, char* argv[]) {
 		}
 	}
 ```
+![image](https://user-images.githubusercontent.com/16128257/119264199-5795da00-bc0c-11eb-9da7-70b3690a1990.png)
+
+catatan : terdapat typo pada tulisan sehingga file gagal dipindah ke kategori. Folder `test` dan `test2` merupakan folder dummy dan bukan yang kategorikan.
+
 3. Menjalankan opsi -d
 ```c
 else if(strcmp(argv[1], "-d") == 0){
@@ -1556,6 +1561,9 @@ else if(strcmp(argv[1], "-d") == 0){
 		}
 	}
 ```
+
+![image](https://user-images.githubusercontent.com/16128257/119264305-cd01aa80-bc0c-11eb-831c-00bb5436370b.png)
+
 4.Menjalankan opsi *
 ```c
 else {
@@ -1575,6 +1583,9 @@ else {
 		printf("Files sukses dikategorikan!\n");
 	}
 ```
+
+![image](https://user-images.githubusercontent.com/16128257/119264336-f1f61d80-bc0c-11eb-8e79-429c9d1def9d.png)
+
 #### Kendala
 Saat ujicoba program awal, ada masalah saat menjalankan opsi \*. Hal ini dikarenakan pada saat menggunakan argument \* pada bash, \* akan dianggap sebuah auto-completion pada saat dipanggil sehingga tidak akan masuk pada program .c. Untuk menyelesaikannya kita menambahkan else dan menganggap argument tersebut sebagai sebuah file.
 #### Hasil Running Program
