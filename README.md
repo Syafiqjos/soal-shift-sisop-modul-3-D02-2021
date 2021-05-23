@@ -1544,11 +1544,11 @@ int main(int argc, char* argv[]) {
 	}
 ```
 3. Menjalankan opsi -d
-```
+```c
 else if(strcmp(argv[1], "-d") == 0){
 		mode = 1;
 		if(errno != 2) {
-			rec(argv[2]);
+			rec(argv[2], true);
 			printf("Direktori sukses disimpan!\n");
 		}
 		else {
@@ -1557,16 +1557,26 @@ else if(strcmp(argv[1], "-d") == 0){
 	}
 ```
 4.Menjalankan opsi *
-```
-else if (strcmp(argv[1], "*") == 0) {
+```c
+else {
 		char cwd[128];
 		getcwd(cwd, sizeof(cwd));
-		rec(cwd);
+
+		mode = 1;
+
+		char* folder = dirname(argv[1]);
+
+		char newfolder[256];
+
+		sprintf(newfolder, "%s/%s", cwd, folder);
+
+		rec(newfolder, false);
+
+		printf("Files sukses dikategorikan!\n");
 	}
-}
 ```
 #### Kendala
-Saat ujicoba program awal, ada masalah saat menjalankan opsi * dan diperbaiki setelah itu.
+Saat ujicoba program awal, ada masalah saat menjalankan opsi \*. Hal ini dikarenakan pada saat menggunakan argument \* pada bash, \* akan dianggap sebuah auto-completion pada saat dipanggil sehingga tidak akan masuk pada program .c. Untuk menyelesaikannya kita menambahkan else dan menganggap argument tersebut sebagai sebuah file.
 #### Hasil Running Program
 # Referensi
 ## 1
