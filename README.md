@@ -12,7 +12,7 @@ Membuat suatu system server dan client menggunakan socket programming yang dapat
 #### Client
 #### Source Code
 1. Code client fokus pada penerimaan input user dan menggunkan thread untuk menerima data atau pesan yang dikirim dari server. Dengan dipisah menggunakan thread seperti ini maka pesan dapat selalu ditampilkan tanpa harus menunggu input user secara asynchronus. Sesaat user mengirim pesan maka pesan data tersebut dikirim ke server.
-```
+```c
 void *receiver_func(void *args){
 	pthread_t id = pthread_self();
 	if (pthread_equal(id, receiver_thread)){
@@ -75,7 +75,7 @@ void *receiver_func(void *args){
 }
 ```
 
-```
+```c
 int main(int argc, char const *argv[]) {
 	// create receiver thread
 	int err = pthread_create(&receiver_thread, NULL, receiver_func,NULL);
