@@ -9,8 +9,7 @@ Membuat suatu system server dan client menggunakan socket programming yang dapat
 
 ### 1A. Membuat system server dan client dengan socket programming yang dapat menerima multi-connection 
 
-#### Client
-#### Source Code
+#### Source Code Client
 1. Code client fokus pada penerimaan input user dan menggunkan thread untuk menerima data atau pesan yang dikirim dari server. Dengan dipisah menggunakan thread seperti ini maka pesan dapat selalu ditampilkan tanpa harus menunggu input user secara asynchronus. Sesaat user mengirim pesan maka pesan data tersebut dikirim ke server.
 ```c
 void *receiver_func(void *args){
@@ -129,8 +128,8 @@ int main(int argc, char const *argv[]) {
 6. Terdapat beberapa kondisi special yang digunakan sebagai indikasi bahwa pada server telah melakukan logout / exit, indikasi server akan menerima upload file dan indikasi client akan menerima download file. Hal ini hanya akan diatur server, sehingga client akan menerima indikator yang diberikan tersebut dan memutuskan apa yang harus dilakukan pada thread.
 7. Download file dan Upload file tetap menggunakan jalur yang sama dengan pengiriman dan penerimaan pesan, untuk itulah indikator yang dijelaskan sebelumnya akan sangat dibutuhkan.
 
-#### Server
-#### Source Code
+#### Source Code Server
+
 ```c
 void write_file(char *path, char* content){
 	FILE *file = fopen(path, "wb");
@@ -416,6 +415,7 @@ void register_akun(char *id, char *pass){
 	}
 ```
 #### Cara pengerjaan
+
 1. Pada dasarnya, programming socket yang digunakan sama seperti modul, tetapi terdapat beberapa modifikasi.
 2. Server melakukan seluruh aplikasi database yang digunakan, terdapat interpreter yang terjadi pada program server yang input tersebut dikirim dari aplikasi client.
 3. Server memiliki 2 state utama, yaitu belum login dan telah login. Sehingga dibuat suatu sistem akun yang menyimpan informasi user yang sedang login saat ini.
@@ -429,12 +429,15 @@ void register_akun(char *id, char *pass){
 #### Contoh Output Program
 
 Percobaan multi-connection, pada kiri adalah server, kanan atas client yang berhasil connect, kiri bawah client yang mencoba connect dan masih menunggu hingga client1 exit.
+
 ![image](https://user-images.githubusercontent.com/16128257/119264470-91b3ab80-bc0d-11eb-9cf0-7b4497853af0.png)
 
 Percobaan register dan login client.
+
 ![image](https://user-images.githubusercontent.com/16128257/119264540-dc352800-bc0d-11eb-8208-4b4dced489b2.png)
 
 Hasil akun.txt
+
 ![image](https://user-images.githubusercontent.com/16128257/119264575-fa028d00-bc0d-11eb-8fc9-3ae3608cdd35.png)
 
 #### Kendala
@@ -698,6 +701,7 @@ void append_buku_file(char *publisher, char *year, char *path){
 6. Selanjutnya melakukan update pada array of `book` pada fungsi `append_buku_file` yang sekalian menambah informasi buku pada `files.tsv`.
 
 #### Contoh Output
+
 ![image](https://user-images.githubusercontent.com/16128257/119264699-6b424000-bc0e-11eb-97dd-a27ea7ecb70e.png)
 
 #### Kendala
@@ -794,10 +798,13 @@ bool read_file(char *path){
 6. Setelah file download berhasil maka server akan kembali pada interpreter global.
 
 #### Contoh Output
+
 Client
+
 ![image](https://user-images.githubusercontent.com/16128257/119264781-afcddb80-bc0e-11eb-8ddd-63ef38b96f26.png)
 
 Server
+
 ![image](https://user-images.githubusercontent.com/16128257/119264787-b52b2600-bc0e-11eb-8d93-5d6a6f864d1d.png)
 
 #### Kendala
@@ -885,9 +892,11 @@ void write_buku_file(){
 
 #### Contoh Output
 Client
+
 ![image](https://user-images.githubusercontent.com/16128257/119264809-d4c24e80-bc0e-11eb-9c0d-c3260c6af06d.png)
 
 Server
+
 ![image](https://user-images.githubusercontent.com/16128257/119264819-ddb32000-bc0e-11eb-85c3-bd6317700903.png)
 
 #### Kendala
@@ -974,6 +983,7 @@ void read_buku_file(bool show){
 Tidak ada kendala untuk soal ini.
 
 #### Contoh Output
+
 ![image](https://user-images.githubusercontent.com/16128257/119264877-00453900-bc0f-11eb-95d9-702fa27ccd50.png)
 
 ### 1G. Fitur agar client dapat mendapat informasi setiap buku sesuai dengan filter yang ada di server
@@ -1006,6 +1016,7 @@ void find_buku_file(char *pattern){
 5. Jika tidak ada buku yang cocok sama sekali maka tidak mengirim output apapun kepada client.
 
 #### Contoh Output
+
 ![image](https://user-images.githubusercontent.com/16128257/119264921-1fdc6180-bc0f-11eb-80f9-70b1baaf5251.png)
 
 #### Kendala
@@ -1197,6 +1208,7 @@ void join_thread(){
 shmdt(matrix)
 ```
 #### Hasil Running Program
+
 ![image](https://user-images.githubusercontent.com/62937814/118835931-a03c5300-b8ed-11eb-9c9c-a104214327d2.png)
 
 #### Kendala
